@@ -36,23 +36,27 @@ class PegawaiController extends Controller
     }
 
     public function destroy($id)
-    {
-        $pegawai = Pegawai::findOrFail($id);
+{
+    $pegawai = Pegawai::findOrFail($id);
 
-        // Hapus relasi
-        Kehadiran::where('id_pegawai', $id)->delete();
-        Gaji::where('id_pegawai', $id)->delete();
+    // Pastikan tabel relasi benar, kalau model pakai nama tabel beda, atur di model
+    Kehadiran::where('id_pegawai', $id)->delete();
+    Gaji::where('id_pegawai', $id)->delete();
 
-        $userId = $pegawai->id_users;
+    // Simpan dulu ID user untuk dihapus setelah pegawai
+    $userId = $pegawai->id_users;
 
-        $pegawai->delete();
+    // Hapus pegawai
+    $pegawai->delete();
 
-        if ($userId) {
-            User::where('id_users', $userId)->delete();
-        }
-
-        return redirect()->route('pegawai.index')->with('success', 'Data pegawai berhasil dihapus');
+    // Hapus user terkait kalau ada
+    if ($userId) {
+        User::where('id_users', $userId)->delete();
     }
+
+    return redirect()->route('admin.pegawai.index')
+        ->with('success', 'Data pegawai berhasil dihapus beserta relasinya');
+}
 
     public function create()
     {
