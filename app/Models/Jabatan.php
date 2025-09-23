@@ -10,10 +10,9 @@ class Jabatan extends Model
     protected $primaryKey = 'id_jabatan';
     public $timestamps = false;
 
-    protected $fillable = ['nama_jabatan'];
-
-    public function pegawai()
-    {
-        return $this->hasMany(Pegawai::class, 'id_jabatan');
-    }
+    protected $fillable = [
+        'nama_jabatan',
+        'tunjangan',
+        'gaji_awal'
+    ];
 }

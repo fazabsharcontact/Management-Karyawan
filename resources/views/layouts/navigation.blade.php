@@ -5,19 +5,59 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
+                    @if(Auth::user()->role === 'admin')
+                        <a href="{{ route('admin.dashboard') }}">
+                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                        </a>
+                    @elseif(Auth::user()->role === 'pegawai')
+                        <a href="{{ route('pegawai.dashboard') }}">
+                            <x-application-logo class="block h-9 w-auto fill-current text-blue-600" />
+                        </a>
+                    @endif
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('admin.pegawai.index')" :active="request()->routeIs('admin.pegawai')">
-                        {{ __('Manajemen Pegawai') }}
-                    </x-nav-link>
+                    {{-- Menu untuk Admin --}}
+                    @if(Auth::user()->role === 'admin')
+                        <x-nav-link :href="route('admin.dashboard')" 
+                            :active="request()->routeIs('admin.dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.pegawai.index')" 
+                            :active="request()->routeIs('admin.pegawai.*')">
+                            {{ __('Manajemen Pegawai') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.gaji.index')" 
+                            :active="request()->routeIs('admin.gaji.*')">
+                            {{ __('Manajemen Gaji') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.jabatan.index')" 
+                            :active="request()->routeIs('admin.jabatan.*')">
+                            {{ __('Manajemen Jabatan') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu untuk Pegawai --}}
+                    @if(Auth::user()->role === 'pegawai')
+                        <x-nav-link :href="route('pegawai.dashboard')" 
+                            :active="request()->routeIs('pegawai.dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+
+                        {{-- <x-nav-link :href="route('pegawai.gaji.index')" 
+                            :active="request()->routeIs('pegawai.gaji.*')">
+                            {{ __('Gaji') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('pegawai.kehadiran.index')" 
+                            :active="request()->routeIs('pegawai.kehadiran.*')">
+                            {{ __('Kehadiran') }}
+                        </x-nav-link> --}}
+                    @endif
                 </div>
             </div>
 
@@ -70,7 +110,7 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
         </div>
