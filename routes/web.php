@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\PegawaiController;
 use App\Http\Controllers\Admin\GajiController;
 use App\Http\Controllers\Admin\JabatanController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
+use App\Http\Controllers\Pegawai\PegawaiGajiController;
+use App\Http\Controllers\Pegawai\PegawaiKehadiranController;
 
 
 // Route::get('/', function () {
@@ -44,4 +46,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // PegawaiDashboard
 Route::middleware(['auth', 'role:pegawai'])->group(function () {
     Route::get('/pegawai/dashboard', [PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
+    Route::get('/gaji', [PegawaiGajiController::class, 'index'])->name('pegawai.gaji');
+    Route::get('/kehadiran', [PegawaiKehadiranController::class, 'index'])->name('pegawai.kehadiran.index');
+    Route::post('/kehadiran', [PegawaiKehadiranController::class, 'store'])->name('pegawai.kehadiran.store');
 });

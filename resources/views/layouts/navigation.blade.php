@@ -48,15 +48,15 @@
                             {{ __('Dashboard') }}
                         </x-nav-link>
 
-                        {{-- <x-nav-link :href="route('pegawai.gaji.index')" 
+                        <x-nav-link :href="route('pegawai.gaji')" 
                             :active="request()->routeIs('pegawai.gaji.*')">
                             {{ __('Gaji') }}
-                        </x-nav-link>
+                        </x-nav-link> 
 
                         <x-nav-link :href="route('pegawai.kehadiran.index')" 
                             :active="request()->routeIs('pegawai.kehadiran.*')">
                             {{ __('Kehadiran') }}
-                        </x-nav-link> --}}
+                        </x-nav-link> 
                     @endif
                 </div>
             </div>

@@ -4,16 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-// app/Models/Kehadiran.php
 class Kehadiran extends Model
 {
-    protected $table = 'kehadiran'; // sesuai nama tabel di DB
-    protected $primaryKey = 'id_kehadiran'; // kalau pakai primary key custom
-}
+    protected $table = 'kehadiran';
+    protected $primaryKey = 'id_kehadiran';
+    public $timestamps = true; // karena ada created_at & updated_at
 
-// app/Models/Gaji.php
-class Gaji extends Model
-{
-    protected $table = 'gaji';
-    protected $primaryKey = 'id_gaji';
+    protected $fillable = [
+        'id_pegawai',
+        'tanggal',
+        'status',
+    ];
+
+    // Relasi ke Pegawai
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class, 'id_pegawai', 'id_pegawai');
+    }
 }
