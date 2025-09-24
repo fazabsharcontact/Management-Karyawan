@@ -52,11 +52,11 @@
                         </td>
                         <td class="border-b px-4 py-2 text-center">
                             <div class="flex justify-center gap-2">
-                                <a href="{{ route('admin.pegawai.edit', $p->id_pegawai) }}" 
+                                <a href="{{ route('admin.pegawai.edit', $p->id) }}" 
                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">
                                     Edit
                                 </a>
-                                <form action="{{ route('admin.pegawai.destroy', $p->id_pegawai) }}" method="POST" 
+                                <form action="{{ route('admin.pegawai.destroy', $p->id) }}" method="POST" 
                                       onsubmit="return confirm('Hapus pegawai {{ $p->nama }}?')">
                                     @csrf
                                     @method('DELETE')

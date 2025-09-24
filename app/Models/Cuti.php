@@ -5,27 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Kehadiran extends Model
+class Cuti extends Model
 {
     use HasFactory;
 
-    protected $table = 'kehadirans';
+    protected $table = 'cutis';
     protected $primaryKey = 'id';
 
     protected $fillable = [
         'pegawai_id',
-        'tanggal',
-        'jam_masuk',
-        'jam_pulang',
-        'status',
+        'tanggal_mulai',
+        'tanggal_selesai',
         'keterangan',
+        'status',
+        'disetujui_oleh_id',
     ];
 
-    /**
-     * Relasi balik ke Pegawai.
-     */
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class, 'pegawai_id');
+    }
+
+    public function disetujuiOleh()
+    {
+        return $this->belongsTo(User::class, 'disetujui_oleh_id');
     }
 }
