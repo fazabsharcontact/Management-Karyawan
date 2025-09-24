@@ -5,143 +5,153 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\Jabatan;
-use App\Models\Kehadiran;
-use App\Models\Gaji;
 use App\Models\User;
+use App\Models\Divisi; // <-- Diperlukan untuk mengambil data Divisi
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules;
 
 class PegawaiController extends Controller
 {
+    /**
+     * Menampilkan daftar semua pegawai.
+     */
     public function index(Request $request)
     {
         $jabatanFilter = $request->get('jabatan');
         $search = $request->get('search');
 
-        $query = Pegawai::with('jabatan');
+        $query = Pegawai::with('jabatan', 'user', 'tim.divisi');
 
-        if ($jabatanFilter) {
-            $query->whereHas('jabatan', function ($q) use ($jabatanFilter) {
-                $q->where('nama_jabatan', $jabatanFilter);
+        $query->when($jabatanFilter, function ($q) use ($jabatanFilter) {
+            $q->whereHas('jabatan', function ($subQuery) use ($jabatanFilter) {
+                $subQuery->where('nama_jabatan', $jabatanFilter);
             });
-        }
+        });
 
-        if ($search) {
-            $query->where('nama', 'like', "%$search%");
-        }
+        $query->when($search, function ($q) use ($search) {
+            $q->where('nama', 'like', "%{$search}%");
+        });
 
-        $pegawai = $query->get();
+        $pegawai = $query->latest()->get();
         $jabatan = Jabatan::all();
 
         return view('admin.pegawai.index', compact('pegawai', 'jabatan'));
     }
 
-    public function destroy($id)
-{
-    $pegawai = Pegawai::findOrFail($id);
-
-    // Pastikan tabel relasi benar, kalau model pakai nama tabel beda, atur di model
-    Kehadiran::where('id_pegawai', $id)->delete();
-    Gaji::where('id_pegawai', $id)->delete();
-
-    // Simpan dulu ID user untuk dihapus setelah pegawai
-    $userId = $pegawai->id_users;
-
-    // Hapus pegawai
-    $pegawai->delete();
-
-    // Hapus user terkait kalau ada
-    if ($userId) {
-        User::where('id_users', $userId)->delete();
-    }
-
-    return redirect()->route('admin.pegawai.index')
-        ->with('success', 'Data pegawai berhasil dihapus beserta relasinya');
-}
-
+    /**
+     * Menampilkan form untuk membuat pegawai baru.
+     */
     public function create()
     {
         $jabatan = Jabatan::all();
-        $users = User::where('role', 'pegawai')->get(); // ambil user untuk di-relasi
-        return view('admin.pegawai.create', compact('jabatan', 'users'));
+        // Mengambil semua divisi beserta tim di dalamnya untuk dikirim ke view
+        $divisis = Divisi::with('tims')->get();
+        return view('admin.pegawai.create', compact('jabatan', 'divisis'));
     }
 
+    /**
+     * Menyimpan pegawai baru ke database.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'username' => 'required|unique:users,username',
-            'password' => 'required|min:6|confirmed',
-            'nama' => 'required',
-            'email' => 'required|email',
-            'telepon' => 'required|numeric',
-            'alamat' => 'required',
-            'jabatan' => 'required|exists:jabatan,id_jabatan',
-            'tanggal_masuk' => 'required|date',
-            'gaji' => 'required|numeric',
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'nama' => ['required', 'string', 'max:255'],
+            'telepon' => ['required', 'string', 'max:20'],
+            'alamat' => ['required', 'string'],
+            'jabatan' => ['required', 'exists:jabatans,id'],
+            'tim_id' => ['nullable', 'exists:tims,id'], // Validasi untuk Tim
+            'tanggal_masuk' => ['required', 'date'],
+            'gaji' => ['required', 'numeric'],
         ]);
 
-        // Simpan user
         $user = User::create([
-            'username' => $request->username,
-            'password' => bcrypt($request->password),
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
             'role' => 'pegawai',
         ]);
 
-        // Simpan pegawai
-        Pegawai::create([
-            'id_users' => $user->id_users,
-            'nama' => $request->nama,
-            'email' => $request->email,
-            'no_hp' => $request->telepon,
-            'alamat' => $request->alamat,
-            'id_jabatan' => $request->jabatan,
-            'tanggal_masuk' => $request->tanggal_masuk,
-            'gaji' => $request->gaji,
+        $user->pegawai()->create([
+            'jabatan_id' => $validated['jabatan'],
+            'tim_id' => $validated['tim_id'] ?? null, // Simpan tim_id
+            'nama' => $validated['nama'],
+            'email' => $validated['email'],
+            'no_hp' => $validated['telepon'],
+            'alamat' => $validated['alamat'],
+            'tanggal_masuk' => $validated['tanggal_masuk'],
+            'gaji_pokok' => $validated['gaji'],
         ]);
 
-        return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan');
+        return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    /**
+     * Menampilkan form untuk mengedit data pegawai.
+     */
+    public function edit(Pegawai $pegawai)
     {
-        $pegawai = Pegawai::findOrFail($id);
         $jabatan = Jabatan::all();
-        return view('admin.pegawai.edit', compact('pegawai','jabatan'));
+        // Mengambil semua divisi beserta tim di dalamnya untuk dikirim ke view
+        $divisis = Divisi::with('tims')->get();
+        $pegawai->load('user');
+        return view('admin.pegawai.edit', compact('pegawai', 'jabatan', 'divisis'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Memperbarui data pegawai di database.
+     */
+    public function update(Request $request, Pegawai $pegawai)
     {
-        $pegawai = Pegawai::findOrFail($id);
-        $user = User::find($pegawai->id_users);
+        $user = $pegawai->user;
 
-        $request->validate([
-            'username' => 'required|unique:users,username,'.$user->id_users.',id_users',
-            'nama' => 'required',
-            'email' => 'required|email',
-            'telepon' => 'required|numeric',
-            'alamat' => 'required',
-            'jabatan' => 'required|exists:jabatan,id_jabatan',
-            'tanggal_masuk' => 'required|date',
-            'gaji' => 'required|numeric',
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'nama' => ['required', 'string', 'max:255'],
+            'telepon' => ['required', 'string', 'max:20'],
+            'alamat' => ['required', 'string'],
+            'jabatan' => ['required', 'exists:jabatans,id'],
+            'tim_id' => ['nullable', 'exists:tims,id'], // Validasi untuk Tim
+            'tanggal_masuk' => ['required', 'date'],
+            'gaji' => ['required', 'numeric'],
         ]);
 
-        // update user
-        $user->username = $request->username;
+        $user->update([
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+        ]);
+        
         if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
+            $request->validate(['password' => ['required', 'confirmed', Rules\Password::defaults()]]);
+            $user->update(['password' => Hash::make($request->password)]);
         }
-        $user->save();
 
-        // update pegawai
         $pegawai->update([
-            'nama' => $request->nama,
-            'email' => $request->email,
-            'no_hp' => $request->telepon,
-            'alamat' => $request->alamat,
-            'id_jabatan' => $request->jabatan,
-            'tanggal_masuk' => $request->tanggal_masuk,
-            'gaji' => $request->gaji,
+            'nama' => $validated['nama'],
+            'email' => $validated['email'],
+            'no_hp' => $validated['telepon'],
+            'alamat' => $validated['alamat'],
+            'jabatan_id' => $validated['jabatan'],
+            'tim_id' => $validated['tim_id'] ?? null, // Update tim_id
+            'tanggal_masuk' => $validated['tanggal_masuk'],
+            'gaji_pokok' => $validated['gaji'],
         ]);
 
-        return redirect()->route('admin.pegawai.index')->with('success', 'Data pegawai berhasil diperbarui');
+        return redirect()->route('admin.pegawai.index')->with('success', 'Data pegawai berhasil diperbarui.');
+    }
+
+    /**
+     * Menghapus data pegawai.
+     */
+    public function destroy(Pegawai $pegawai)
+    {
+        // Menghapus User akan otomatis menghapus Pegawai karena onDelete('cascade')
+        $pegawai->user()->delete();
+        return redirect()->route('admin.pegawai.index')->with('success', 'Data pegawai berhasil dihapus.');
     }
 }

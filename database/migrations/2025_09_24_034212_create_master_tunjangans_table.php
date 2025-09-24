@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('gajis', function (Blueprint $table) {
+        Schema::create('master_tunjangans', function (Blueprint $table) {
             $table->id();
+            $table->string('nama_tunjangan', 100)->unique();
+            $table->text('deskripsi')->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('gajis');
+        Schema::dropIfExists('master_tunjangans');
     }
 };

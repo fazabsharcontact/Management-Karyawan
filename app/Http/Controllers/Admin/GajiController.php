@@ -10,24 +10,27 @@ use Illuminate\Http\Request;
 
 class GajiController extends Controller
 {
+    /**
+     * Menampilkan daftar semua data gaji.
+     */
     public function index(Request $request)
     {
         $search = $request->get('search');
         $jabatanFilter = $request->get('jabatan');
 
-        $query = Gaji::with(['pegawai.jabatan']);
+        $query = Gaji::with(['pegawai.jabatan'])->latest();
 
-        if ($search) {
-            $query->whereHas('pegawai', function ($q) use ($search) {
-                $q->where('nama', 'like', "%$search%");
+        $query->when($search, function ($q) use ($search) {
+            $q->whereHas('pegawai', function ($subQuery) use ($search) {
+                $subQuery->where('nama', 'like', "%{$search}%");
             });
-        }
+        });
 
-        if ($jabatanFilter) {
-            $query->whereHas('pegawai.jabatan', function ($q) use ($jabatanFilter) {
-                $q->where('nama_jabatan', $jabatanFilter);
+        $query->when($jabatanFilter, function ($q) use ($jabatanFilter) {
+            $q->whereHas('pegawai.jabatan', function ($subQuery) use ($jabatanFilter) {
+                $subQuery->where('nama_jabatan', $jabatanFilter);
             });
-        }
+        });
 
         $gaji = $query->get();
         $jabatan = Jabatan::all();
@@ -35,65 +38,72 @@ class GajiController extends Controller
         return view('admin.gaji.index', compact('gaji', 'jabatan'));
     }
 
+    /**
+     * Menampilkan form untuk membuat data gaji baru.
+     */
     public function create()
     {
-        $pegawai = Pegawai::with('jabatan')->get();
-
-        $bulan_nama = [
-            1=>"Januari", 2=>"Februari", 3=>"Maret", 4=>"April", 5=>"Mei", 6=>"Juni",
-            7=>"Juli", 8=>"Agustus", 9=>"September", 10=>"Oktober", 11=>"November", 12=>"Desember"
-        ];
-
-        return view('admin.gaji.create', compact('pegawai', 'bulan_nama'));
+        $pegawais = Pegawai::orderBy('nama')->get();
+        return view('admin.gaji.create', compact('pegawais'));
     }
 
-    public function edit($id)
-    {
-        $gaji = Gaji::findOrFail($id);
-        $pegawai = Pegawai::with('jabatan')->get();
-
-        $bulan_nama = [
-            1=>"Januari", 2=>"Februari", 3=>"Maret", 4=>"April", 5=>"Mei", 6=>"Juni",
-            7=>"Juli", 8=>"Agustus", 9=>"September", 10=>"Oktober", 11=>"November", 12=>"Desember"
-        ];
-
-        return view('admin.gaji.edit', compact('gaji', 'pegawai', 'bulan_nama'));
-    }
-
+    /**
+     * Menyimpan data gaji baru ke database.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'id_pegawai' => 'required|exists:pegawai,id_pegawai',
+        $validated = $request->validate([
+            'pegawai_id' => 'required|exists:pegawais,id',
             'bulan' => 'required|integer|min:1|max:12',
-            'tahun' => 'required|integer|min:2000',
-            'total_gaji' => 'required|numeric',
+            'tahun' => 'required|integer|min:2020',
+            'gaji_pokok' => 'required|numeric',
+            'total_tunjangan' => 'required|numeric',
+            'total_potongan' => 'required|numeric',
         ]);
 
-        Gaji::create($request->all());
+        $gaji_bersih = $validated['gaji_pokok'] + $validated['total_tunjangan'] - $validated['total_potongan'];
 
-        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil ditambahkan');
+        Gaji::create(array_merge($validated, ['gaji_bersih' => $gaji_bersih]));
+
+        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil ditambahkan.');
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Menampilkan form untuk mengedit data gaji.
+     */
+    public function edit(Gaji $gaji) // Menggunakan Route Model Binding
     {
-        $request->validate([
-            'id_pegawai' => 'required|exists:pegawai,id_pegawai',
+        $pegawais = Pegawai::orderBy('nama')->get();
+        return view('admin.gaji.edit', compact('gaji', 'pegawais'));
+    }
+
+    /**
+     * Memperbarui data gaji di database.
+     */
+    public function update(Request $request, Gaji $gaji) // Menggunakan Route Model Binding
+    {
+        $validated = $request->validate([
+            'pegawai_id' => 'required|exists:pegawais,id',
             'bulan' => 'required|integer|min:1|max:12',
-            'tahun' => 'required|integer|min:2000',
-            'total_gaji' => 'required|numeric',
+            'tahun' => 'required|integer|min:2020',
+            'gaji_pokok' => 'required|numeric',
+            'total_tunjangan' => 'required|numeric',
+            'total_potongan' => 'required|numeric',
         ]);
 
-        $gaji = Gaji::findOrFail($id);
-        $gaji->update($request->all());
+        $gaji_bersih = $validated['gaji_pokok'] + $validated['total_tunjangan'] - $validated['total_potongan'];
 
-        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil diperbarui');
+        $gaji->update(array_merge($validated, ['gaji_bersih' => $gaji_bersih]));
+
+        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    /**
+     * Menghapus data gaji dari database.
+     */
+    public function destroy(Gaji $gaji) // Menggunakan Route Model Binding
     {
-        $gaji = Gaji::findOrFail($id);
         $gaji->delete();
-
-        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil dihapus');
+        return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil dihapus.');
     }
 }

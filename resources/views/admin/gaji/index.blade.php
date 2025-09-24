@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Manajemen Gaji
         </h2>
     </x-slot>
@@ -9,7 +9,7 @@
         <!-- Filter -->
         <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-4 mb-6">
             <form method="GET" class="flex flex-col md:flex-row gap-3">
-                <input type="text" name="search" placeholder="Cari pegawai..." 
+                <input type="text" name="search" placeholder="Cari nama pegawai..." 
                        class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200"
                        value="{{ request('search') }}">
                 <select name="jabatan" 
@@ -37,7 +37,7 @@
                         <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Jabatan</th>
                         <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Bulan</th>
                         <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Tahun</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Total Gaji</th>
+                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji Bersih</th>
                         <th class="border-b px-4 py-2 text-center text-sm font-medium text-gray-600">Aksi</th>
                     </tr>
                 </thead>
@@ -49,20 +49,23 @@
                             9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"
                         ];
                     @endphp
-                    @foreach($gaji as $g)
+                    @forelse($gaji as $g)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->nama ?? '-' }}</td>
                         <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->jabatan->nama_jabatan ?? '-' }}</td>
                         <td class="border-b px-4 py-2 text-gray-800">{{ $bulan_nama[$g->bulan] ?? '-' }}</td>
                         <td class="border-b px-4 py-2 text-gray-800">{{ $g->tahun }}</td>
-                        <td class="border-b px-4 py-2 text-gray-800">Rp {{ number_format($g->total_gaji, 0, ',', '.') }}</td>
+                        {{-- PERBAIKAN: Gunakan 'gaji_bersih' --}}
+                        <td class="border-b px-4 py-2 text-gray-800">Rp {{ number_format($g->gaji_bersih, 0, ',', '.') }}</td>
                         <td class="border-b px-4 py-2 text-center">
                             <div class="flex justify-center gap-2">
-                                <a href="{{ route('admin.gaji.edit', $g->id_gaji) }}" 
+                                {{-- PERBAIKAN: Gunakan '$g->id' --}}
+                                <a href="{{ route('admin.gaji.edit', $g->id) }}" 
                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">
                                     Edit
                                 </a>
-                                <form action="{{ route('admin.gaji.destroy', $g->id_gaji) }}" method="POST" 
+                                {{-- PERBAIKAN: Gunakan '$g->id' --}}
+                                <form action="{{ route('admin.gaji.destroy', $g->id) }}" method="POST" 
                                       onsubmit="return confirm('Hapus data gaji ini?')" class="inline">
                                     @csrf
                                     @method('DELETE')
@@ -74,7 +77,11 @@
                             </div>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-500 py-4">Tidak ada data gaji yang ditemukan.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
 

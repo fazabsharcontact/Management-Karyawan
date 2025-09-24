@@ -9,10 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // file: ..._create_pengumumen_table.php
+
     public function up(): void
     {
-        Schema::create('jabatans', function (Blueprint $table) {
+        Schema::create('pengumuman', function (Blueprint $table) {
             $table->id();
+            
+            // --- DIUBAH ---
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                
+            $table->string('judul');
+            $table->text('isi');
             $table->timestamps();
         });
     }
@@ -22,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jabatans');
+        Schema::dropIfExists('pengumumen');
     }
 };
