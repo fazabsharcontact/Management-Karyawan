@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama_jabatan', 100);
             $table->decimal('tunjangan', 15, 2)->default(0);
+            $table->decimal('gaji_awal', 15, 2)->default(0);
             $table->timestamps();
         });
     }
