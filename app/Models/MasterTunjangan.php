@@ -10,7 +10,23 @@ class MasterTunjangan extends Model
     use HasFactory;
     
     protected $table = 'master_tunjangans';
-    protected $primaryKey = 'id';
 
-    protected $fillable = ['nama_tunjangan', 'deskripsi'];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'nama_tunjangan',
+        'deskripsi',
+        'jumlah_default', // Kolom baru ditambahkan
+    ];
+
+    /**
+     * Relasi ke detail gaji untuk bisa menghitung total.
+     */
+    public function details()
+    {
+        return $this->hasMany(GajiTunjanganDetail::class, 'master_tunjangan_id');
+    }
 }
