@@ -20,14 +20,12 @@ class MasterTunjanganController extends Controller
     }
 
     /**
-     * Menyimpan tunjangan baru ke database.
      */
     public function store(Request $request)
     {
-        // PERBAIKAN: Tambahkan validasi untuk 'jumlah_default'
         $validated = $request->validate([
             'nama_tunjangan' => 'required|string|max:100|unique:master_tunjangans,nama_tunjangan',
-            'jumlah_default' => 'nullable|numeric|min:0', // Memastikan nilainya angka & tidak negatif
+            'jumlah_default' => 'nullable|numeric|min:0', 
             'deskripsi' => 'nullable|string',
         ]);
 
@@ -38,7 +36,6 @@ class MasterTunjanganController extends Controller
     }
 
     /**
-     * Menampilkan form untuk mengedit tunjangan.
      */
     public function edit(MasterTunjangan $masterTunjangan)
     {
@@ -46,11 +43,9 @@ class MasterTunjanganController extends Controller
     }
 
     /**
-     * Memperbarui data tunjangan di database.
      */
     public function update(Request $request, MasterTunjangan $masterTunjangan)
     {
-        // PERBAIKAN: Tambahkan validasi untuk 'jumlah_default'
         $validated = $request->validate([
             'nama_tunjangan' => ['required', 'string', 'max:100', Rule::unique('master_tunjangans')->ignore($masterTunjangan->id)],
             'jumlah_default' => 'nullable|numeric|min:0',

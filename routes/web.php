@@ -15,6 +15,9 @@ use App\Http\Controllers\Admin\MasterPotonganController;
 use App\Http\Controllers\Admin\TimDivisiController;
 use App\Http\Controllers\Admin\DivisiController;
 use App\Http\Controllers\Admin\TimController;
+use App\Http\Controllers\Admin\MeetingController;
+use App\Http\Controllers\Admin\CutiController;
+use App\Http\Controllers\Admin\PengumumanController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -37,7 +40,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // AdminDashboard
-// Menambahkan prefix 'admin' untuk membuat URL unik, contoh: /admin/dashboard
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::resource('pegawai', PegawaiController::class)->names('admin.pegawai')->except(['show']);
@@ -49,10 +51,16 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('tim-divisi', [TimDivisiController::class, 'index'])->name('admin.tim-divisi.index');
     Route::resource('divisi', DivisiController::class)->names('admin.divisi')->except(['index', 'show']);
     Route::resource('tim', TimController::class)->names('admin.tim')->except(['index', 'show']);
+    Route::resource('meeting', MeetingController::class)->names('admin.meeting');
+    Route::get('cuti', [CutiController::class, 'index'])->name('admin.cuti.index');
+    Route::patch('cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('admin.cuti.updateStatus');
+    Route::resource('pengumuman', PengumumanController::class)
+        ->names('admin.pengumuman')
+        ->only(['index', 'create', 'store', 'destroy']);
+
 });
 
 // PegawaiDashboard
-// Menambahkan prefix 'pegawai' untuk membuat URL unik, contoh: /pegawai/dashboard
 Route::prefix('pegawai')->middleware(['auth', 'role:pegawai'])->group(function () {
     Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
     Route::get('/gaji', [PegawaiGajiController::class, 'index'])->name('pegawai.gaji');

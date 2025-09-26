@@ -25,29 +25,44 @@
                             {{ __('Dashboard') }}
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.pengumuman.index')" 
+                                    :active="request()->routeIs('admin.pengumuman.*')">
+                            {{ __('Pengumuman') }}
+                        </x-nav-link>
+
                         <x-nav-link :href="route('admin.pegawai.index')" 
                             :active="request()->routeIs('admin.pegawai.*')">
-                            {{ __('Manajemen Pegawai') }}
+                            {{ __('Pegawai') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.gaji.index')" 
                             :active="request()->routeIs('admin.gaji.*')">
-                            {{ __('Manajemen Gaji') }}
+                            {{ __('Gaji') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.tunjangan-potongan.index')" 
                                     :active="request()->routeIs('admin.tunjangan-potongan.*')">
-                            {{ __('Manajemen Tunjangan & Potongan') }}
+                            {{ __('Tunjangan & Potongan') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.jabatan.index')" 
                             :active="request()->routeIs('admin.jabatan.*')">
-                            {{ __('Manajemen Jabatan') }}
+                            {{ __('Jabatan') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('admin.meeting.index')" 
+                                    :active="request()->routeIs('admin.meeting.*')">
+                            {{ __('Meeting') }}
                         </x-nav-link>
 
                        <x-nav-link :href="route('admin.tim-divisi.index')" 
                                     :active="request()->routeIs('admin.tim-divisi.*')">
-                            {{ __('Manajemen Tim & Divisi') }}
+                            {{ __('Tim & Divisi') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.cuti.index')" 
+                                    :active="request()->routeIs('admin.cuti.*')">
+                            {{ __('Manajemen Cuti') }}
                         </x-nav-link>
 
 

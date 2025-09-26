@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('pengumuman_penerimas', function (Blueprint $table) {
             $table->id();
+            
+            // Kolom untuk menghubungkan ke tabel 'pengumuman'
+            $table->foreignId('pengumuman_id')->constrained('pengumuman')->onDelete('cascade');
+            
+            // KOLOM YANG HILANG: untuk menentukan tipe target
+            $table->enum('target_type', ['semua', 'divisi', 'tim', 'jabatan', 'pegawai']);
+            
+            // Kolom untuk menyimpan ID dari target
+            $table->unsignedBigInteger('target_id')->nullable();
+            
             $table->timestamps();
         });
     }
