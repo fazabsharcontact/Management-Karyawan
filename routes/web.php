@@ -36,11 +36,11 @@ Route::middleware('auth')->group(function () {
 });
 
 // AdminDashboard
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::resource('pegawai', PegawaiController::class)->names('admin.pegawai')->except(['show']);;
-    Route::resource('gaji', GajiController::class)->names('admin.gaji');
-    Route::resource('jabatan', JabatanController::class)->names('admin.jabatan');
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('pegawai', PegawaiController::class)->except(['show']);
+    Route::resource('gaji', GajiController::class);
+    Route::resource('jabatan', JabatanController::class);
 });
 
 // PegawaiDashboard
