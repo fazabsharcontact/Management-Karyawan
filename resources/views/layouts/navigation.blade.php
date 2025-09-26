@@ -35,10 +35,23 @@
                             {{ __('Manajemen Gaji') }}
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.tunjangan-potongan.index')" 
+                                    :active="request()->routeIs('admin.tunjangan-potongan.*')">
+                            {{ __('Manajemen Tunjangan & Potongan') }}
+                        </x-nav-link>
+
                         <x-nav-link :href="route('admin.jabatan.index')" 
                             :active="request()->routeIs('admin.jabatan.*')">
                             {{ __('Manajemen Jabatan') }}
                         </x-nav-link>
+
+                       <x-nav-link :href="route('admin.tim-divisi.index')" 
+                                    :active="request()->routeIs('admin.tim-divisi.*')">
+                            {{ __('Manajemen Tim & Divisi') }}
+                        </x-nav-link>
+
+
+                         
                     @endif
 
                     {{-- Menu untuk Pegawai --}}

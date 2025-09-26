@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Gaji;
 use App\Models\Pegawai;
 use App\Models\Jabatan;
+use App\Models\MasterTunjangan;
+use App\Models\MasterPotongan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class GajiController extends Controller
 {
@@ -32,8 +36,8 @@ class GajiController extends Controller
             });
         });
 
-        $gaji = $query->get();
-        $jabatan = Jabatan::all();
+        $gaji = $query->paginate(10); // Menggunakan paginasi
+        $jabatan = Jabatan::orderBy('nama_jabatan')->get();
 
         return view('admin.gaji.index', compact('gaji', 'jabatan'));
     }
@@ -44,7 +48,10 @@ class GajiController extends Controller
     public function create()
     {
         $pegawais = Pegawai::orderBy('nama')->get();
-        return view('admin.gaji.create', compact('pegawais'));
+        $masterTunjangans = MasterTunjangan::orderBy('nama_tunjangan')->get();
+        $masterPotongans = MasterPotongan::orderBy('nama_potongan')->get();
+
+        return view('admin.gaji.create', compact('pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
     /**
@@ -56,14 +63,49 @@ class GajiController extends Controller
             'pegawai_id' => 'required|exists:pegawais,id',
             'bulan' => 'required|integer|min:1|max:12',
             'tahun' => 'required|integer|min:2020',
-            'gaji_pokok' => 'required|numeric',
-            'total_tunjangan' => 'required|numeric',
-            'total_potongan' => 'required|numeric',
+            'gaji_pokok' => 'required|numeric|min:0',
+            // Validasi untuk array
+            'tunjangans' => 'nullable|array',
+            'tunjangans.*.master_tunjangan_id' => 'required|exists:master_tunjangans,id',
+            'tunjangans.*.jumlah' => 'required|numeric|min:0',
+            'tunjangans.*.keterangan' => 'nullable|string',
+            'potongans' => 'nullable|array',
+            'potongans.*.master_potongan_id' => 'required|exists:master_potongans,id',
+            'potongans.*.jumlah' => 'required|numeric|min:0',
+            'potongans.*.keterangan' => 'nullable|string',
         ]);
 
-        $gaji_bersih = $validated['gaji_pokok'] + $validated['total_tunjangan'] - $validated['total_potongan'];
+        // Memulai transaksi database
+        DB::transaction(function () use ($validated, $request) {
+            $totalTunjangan = collect($request->tunjangans)->sum('jumlah');
+            $totalPotongan = collect($request->potongans)->sum('jumlah');
+            $gajiBersih = $validated['gaji_pokok'] + $totalTunjangan - $totalPotongan;
 
-        Gaji::create(array_merge($validated, ['gaji_bersih' => $gaji_bersih]));
+            // 1. Buat record Gaji utama
+            $gaji = Gaji::create([
+                'pegawai_id' => $validated['pegawai_id'],
+                'bulan' => $validated['bulan'],
+                'tahun' => $validated['tahun'],
+                'gaji_pokok' => $validated['gaji_pokok'],
+                'total_tunjangan' => $totalTunjangan,
+                'total_potongan' => $totalPotongan,
+                'gaji_bersih' => $gajiBersih,
+            ]);
+
+            // 2. Simpan detail tunjangan jika ada
+            if ($request->has('tunjangans')) {
+                foreach ($request->tunjangans as $tunjangan) {
+                    $gaji->tunjanganDetails()->create($tunjangan);
+                }
+            }
+
+            // 3. Simpan detail potongan jika ada
+            if ($request->has('potongans')) {
+                foreach ($request->potongans as $potongan) {
+                    $gaji->potonganDetails()->create($potongan);
+                }
+            }
+        });
 
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil ditambahkan.');
     }
@@ -71,29 +113,70 @@ class GajiController extends Controller
     /**
      * Menampilkan form untuk mengedit data gaji.
      */
-    public function edit(Gaji $gaji) // Menggunakan Route Model Binding
+    public function edit(Gaji $gaji)
     {
+        $gaji->load(['tunjanganDetails', 'potonganDetails']);
         $pegawais = Pegawai::orderBy('nama')->get();
-        return view('admin.gaji.edit', compact('gaji', 'pegawais'));
+        $masterTunjangans = MasterTunjangan::orderBy('nama_tunjangan')->get();
+        $masterPotongans = MasterPotongan::orderBy('nama_potongan')->get();
+        
+        return view('admin.gaji.edit', compact('gaji', 'pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
     /**
      * Memperbarui data gaji di database.
      */
-    public function update(Request $request, Gaji $gaji) // Menggunakan Route Model Binding
+    public function update(Request $request, Gaji $gaji)
     {
         $validated = $request->validate([
             'pegawai_id' => 'required|exists:pegawais,id',
             'bulan' => 'required|integer|min:1|max:12',
             'tahun' => 'required|integer|min:2020',
-            'gaji_pokok' => 'required|numeric',
-            'total_tunjangan' => 'required|numeric',
-            'total_potongan' => 'required|numeric',
+            'gaji_pokok' => 'required|numeric|min:0',
+            'tunjangans' => 'nullable|array',
+            'tunjangans.*.master_tunjangan_id' => 'required|exists:master_tunjangans,id',
+            'tunjangans.*.jumlah' => 'required|numeric|min:0',
+            'tunjangans.*.keterangan' => 'nullable|string',
+            'potongans' => 'nullable|array',
+            'potongans.*.master_potongan_id' => 'required|exists:master_potongans,id',
+            'potongans.*.jumlah' => 'required|numeric|min:0',
+            'potongans.*.keterangan' => 'nullable|string',
         ]);
+        
+        DB::transaction(function () use ($validated, $request, $gaji) {
+            // Hapus detail lama
+            $gaji->tunjanganDetails()->delete();
+            $gaji->potonganDetails()->delete();
 
-        $gaji_bersih = $validated['gaji_pokok'] + $validated['total_tunjangan'] - $validated['total_potongan'];
+            $totalTunjangan = collect($request->tunjangans)->sum('jumlah');
+            $totalPotongan = collect($request->potongans)->sum('jumlah');
+            $gajiBersih = $validated['gaji_pokok'] + $totalTunjangan - $totalPotongan;
 
-        $gaji->update(array_merge($validated, ['gaji_bersih' => $gaji_bersih]));
+            // 1. Update record Gaji utama
+            $gaji->update([
+                'pegawai_id' => $validated['pegawai_id'],
+                'bulan' => $validated['bulan'],
+                'tahun' => $validated['tahun'],
+                'gaji_pokok' => $validated['gaji_pokok'],
+                'total_tunjangan' => $totalTunjangan,
+                'total_potongan' => $totalPotongan,
+                'gaji_bersih' => $gajiBersih,
+            ]);
+
+            // 2. Simpan kembali detail tunjangan yang baru
+            if ($request->has('tunjangans')) {
+                foreach ($request->tunjangans as $tunjangan) {
+                    $gaji->tunjanganDetails()->create($tunjangan);
+                }
+            }
+
+            // 3. Simpan kembali detail potongan yang baru
+            if ($request->has('potongans')) {
+                foreach ($request->potongans as $potongan) {
+                    $gaji->potonganDetails()->create($potongan);
+                }
+            }
+        });
 
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil diperbarui.');
     }
@@ -101,9 +184,10 @@ class GajiController extends Controller
     /**
      * Menghapus data gaji dari database.
      */
-    public function destroy(Gaji $gaji) // Menggunakan Route Model Binding
+    public function destroy(Gaji $gaji)
     {
         $gaji->delete();
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil dihapus.');
     }
 }
+

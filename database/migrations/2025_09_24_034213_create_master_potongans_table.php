@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama_potongan', 100)->unique();
             $table->text('deskripsi')->nullable();
+            $table->decimal('jumlah_default', 15, 2)->nullable()->comment('Nilai default untuk potongan');
             $table->timestamps();
         });
     }

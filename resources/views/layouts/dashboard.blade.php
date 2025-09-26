@@ -53,6 +53,11 @@
                         🎖️ Manajemen Jabatan
                     </a>
                 </li>
+                <li>
+                    <a href="#" class="block px-3 py-2 rounded hover:bg-gray-700">
+                        🎖️ Manajemen Tunjangan
+                    </a>
+                </li>
             </ul>
         </aside>
 

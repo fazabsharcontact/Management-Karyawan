@@ -9,7 +9,12 @@ use App\Http\Controllers\Admin\JabatanController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\PegawaiGajiController;
 use App\Http\Controllers\Pegawai\PegawaiKehadiranController;
-
+use App\Http\Controllers\Admin\TunjanganPotonganController;
+use App\Http\Controllers\Admin\MasterTunjanganController; 
+use App\Http\Controllers\Admin\MasterPotonganController;
+use App\Http\Controllers\Admin\TimDivisiController;
+use App\Http\Controllers\Admin\DivisiController;
+use App\Http\Controllers\Admin\TimController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -38,6 +43,12 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('pegawai', PegawaiController::class)->names('admin.pegawai')->except(['show']);
     Route::resource('gaji', GajiController::class)->names('admin.gaji');
     Route::resource('jabatan', JabatanController::class)->names('admin.jabatan');
+    Route::get('tunjangan-potongan', [TunjanganPotonganController::class, 'index'])->name('admin.tunjangan-potongan.index');
+    Route::resource('master-tunjangan', MasterTunjanganController::class)->names('admin.master-tunjangan')->except(['show']);
+    Route::resource('master-potongan', MasterPotonganController::class)->names('admin.master-potongan')->except(['show']);
+    Route::get('tim-divisi', [TimDivisiController::class, 'index'])->name('admin.tim-divisi.index');
+    Route::resource('divisi', DivisiController::class)->names('admin.divisi')->except(['index', 'show']);
+    Route::resource('tim', TimController::class)->names('admin.tim')->except(['index', 'show']);
 });
 
 // PegawaiDashboard
