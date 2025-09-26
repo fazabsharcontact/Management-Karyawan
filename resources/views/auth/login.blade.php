@@ -1,8 +1,8 @@
 <x-guest-layout>
     <div class="min-h-screen flex items-center justify-center bg-white">
-        <div class="bg-gray-100 shadow-lg rounded-[3rem] flex flex-col lg:flex-row w-full max-w-6xl h-auto lg:h-[700px] overflow-hidden">
+        <div class="bg-gray-100 shadow-lg rounded-none lg:rounded-[2rem] flex flex-col lg:flex-row w-full max-w-6xl h-auto lg:h-[700px] overflow-hidden">
 
-            <!-- Left Panel -->
+            <!-- Left Panel (hanya muncul di desktop) -->
             <div 
                 class="lg:w-[35%] bg-cover bg-center text-white p-10 hidden lg:flex flex-col justify-between"
                 style="background-image: url('{{ asset('images/login-bg.jpg') }}')">
@@ -16,9 +16,21 @@
             </div>
 
             <!-- Right Panel -->
-            <div class="w-full lg:w-[65%] px-8 md:px-16 lg:px-24 py-10 flex flex-col justify-center">
-                <h2 class="text-5xl lg:text-6xl font-bold mb-2 text-center">Welcome back</h2>
-                <p class="text-lg mb-6 text-center text-gray-700">Welcome Back! Please enter your details</p>
+            <div class="w-full lg:w-[65%] px-8 md:px-16 lg:px-24 pt-0 lg:pt-10 pb-10 flex flex-col justify-center">
+
+                <!-- Mobile Header -->
+                <div class="block lg:hidden text-center mb-8">
+                    <div 
+                        class="rounded-b-3xl p-10 text-white"
+                        style="background-image: url('{{ asset('images/login-bg.jpg') }}')">
+                        <p class="text-2xl font-bold">Move Fast.<br>Break Nothing.</p>
+                        <h2 class="text-xl font-semibold mt-4">Worktify.</h2>
+                    </div>
+                </div>
+
+                <!-- Welcome Text -->
+                <h2 class="text-3xl lg:text-4xl font-bold mb-2 text-center lg:text-center">Welcome back</h2>
+                <p class="text-md lg:text-lg mb-6 text-gray-700 text-center lg:text-center">Please enter your details</p>
 
                 <!-- Session Status -->
                 <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -28,9 +40,9 @@
 
                     <!-- Username -->
                     <div class="mb-4">
-                        <x-input-label for="username" :value="__('Username')" class="text-gray-700 font-semibold max-w-xs" />
+                        <x-input-label for="username" :value="__('Username')" class="text-gray-700 font-semibold" />
                         <x-text-input id="username" 
-                                      class="mt-1 block w-full mx-auto border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" 
+                                      class="mt-1 block w-full border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-900" 
                                       type="text" 
                                       name="username" 
                                       :value="old('username')" 
@@ -42,7 +54,7 @@
                     <div class="mb-4">
                         <x-input-label for="password" :value="__('Password')" class="text-gray-700 font-semibold" />
                         <x-text-input id="password" 
-                                      class="mt-1 block w-full mx-auto border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" 
+                                      class="mt-1 block w-full border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-900" 
                                       type="password"
                                       name="password"
                                       required autocomplete="current-password" />
