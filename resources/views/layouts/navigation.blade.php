@@ -65,6 +65,11 @@
                             {{ __('Manajemen Cuti') }}
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.laporan.performa')" 
+                                    :active="request()->routeIs('admin.laporan.performa')">
+                            {{ __('Laporan Performa') }}
+                        </x-nav-link>
+
 
                          
                     @endif

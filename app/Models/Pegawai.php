@@ -60,4 +60,9 @@ class Pegawai extends Model
     {
         return $this->hasMany(Cuti::class, 'pegawai_id');
     }
+
+    public function tugasDiterima()
+    {
+        return $this->hasMany(Tugas::class, 'penerima_id');
+    }
 }

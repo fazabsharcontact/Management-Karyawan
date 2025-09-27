@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\TimController;
 use App\Http\Controllers\Admin\MeetingController;
 use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\PengumumanController;
+use App\Http\Controllers\Admin\LaporanPerformaController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -44,6 +45,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::resource('pegawai', PegawaiController::class)->names('admin.pegawai')->except(['show']);
     Route::resource('gaji', GajiController::class)->names('admin.gaji');
+    Route::get('gaji/{gaji}/slip', [GajiController::class, 'unduhSlipGaji'])->name('admin.gaji.slip');
     Route::resource('jabatan', JabatanController::class)->names('admin.jabatan');
     Route::get('tunjangan-potongan', [TunjanganPotonganController::class, 'index'])->name('admin.tunjangan-potongan.index');
     Route::resource('master-tunjangan', MasterTunjanganController::class)->names('admin.master-tunjangan')->except(['show']);
@@ -57,6 +59,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('pengumuman', PengumumanController::class)
         ->names('admin.pengumuman')
         ->only(['index', 'create', 'store', 'destroy']);
+    Route::get('laporan', [LaporanController::class, 'index'])->name('admin.laporan.index');
+    Route::get('laporan-performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
+    Route::get('laporan-performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
+    
 
 });
 

@@ -12,7 +12,6 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Pilih Pegawai -->
                     <div>
                         <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
                         <select name="pegawai_id" id="pegawai_id" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
@@ -23,7 +22,6 @@
                         </select>
                     </div>
 
-                    <!-- Bulan -->
                     <div>
                         <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
                         <select name="bulan" id="bulan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
@@ -33,13 +31,11 @@
                         </select>
                     </div>
 
-                    <!-- Tahun -->
                     <div>
                         <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
                         <input type="number" name="tahun" id="tahun" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ date('Y') }}" required>
                     </div>
 
-                    <!-- Gaji Pokok -->
                     <div>
                         <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
                         <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" placeholder="Gaji Pokok" required>
@@ -47,29 +43,24 @@
                 </div>
             </div>
 
-            <!-- Tunjangan Dinamis -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Tunjangan</h3>
                     <button type="button" id="add-tunjangan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Tunjangan</button>
                 </div>
                 <div id="tunjangan-container" class="space-y-3">
-                    <!-- Baris tunjangan akan ditambahkan di sini oleh JavaScript -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Potongan Dinamis -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Potongan</h3>
                     <button type="button" id="add-potongan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Potongan</button>
                 </div>
                 <div id="potongan-container" class="space-y-3">
-                    <!-- Baris potongan akan ditambahkan di sini oleh JavaScript -->
-                </div>
+                    </div>
             </div>
             
-            <!-- Ringkasan Gaji -->
             <div class="bg-gray-50 p-6 rounded-lg shadow">
                  <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
                  <div class="space-y-2 text-sm">
@@ -80,7 +71,6 @@
                  </div>
             </div>
 
-            <!-- Submit -->
             <div class="flex items-center gap-4 pt-4">
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow">Simpan</button>
                 <a href="{{ route('admin.gaji.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
@@ -111,8 +101,8 @@
                 document.getElementById('summary-gaji-bersih').textContent = formatter.format(gajiBersih);
             }
 
-            form.addEventListener('input', calculateTotals);
-            form.addEventListener('change', calculateTotals);
+            // PERBAIKAN: Event listener untuk Gaji Pokok
+            document.getElementById('gaji_pokok').addEventListener('input', calculateTotals);
 
             document.getElementById('pegawai_id').addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
@@ -167,10 +157,12 @@
                 
                 newRow.querySelector(`.${selectClass}`).addEventListener('change', handleDropdownChange);
                 
-                // --- PERBAIKAN: Menambahkan event listener langsung ke tombol hapus ---
+                // PERBAIKAN: Menambahkan event listener 'input' langsung ke field jumlah yang baru dibuat
+                newRow.querySelector('.jumlah-input').addEventListener('input', calculateTotals);
+                
                 newRow.querySelector('.remove-row').addEventListener('click', function() {
-                    newRow.remove(); // Langsung hapus elemen baris ini
-                    calculateTotals(); // Hitung ulang totalnya
+                    newRow.remove(); 
+                    calculateTotals();
                 });
                 
                 calculateTotals();
@@ -178,19 +170,8 @@
             
             document.getElementById('add-tunjangan').addEventListener('click', () => addNewRow('tunjangan'));
             document.getElementById('add-potongan').addEventListener('click', () => addNewRow('potongan'));
-            
-            // --- DIHAPUS: Event listener yang didelegasikan ke form tidak lagi diperlukan untuk tombol hapus ---
-            /*
-            form.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-row')) {
-                    e.target.closest('.grid').remove();
-                    calculateTotals();
-                }
-            });
-            */
 
             calculateTotals();
         });
     </script>
 </x-app-layout>
-

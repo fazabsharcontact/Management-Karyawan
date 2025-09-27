@@ -13,18 +13,15 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Pilih Pegawai -->
                     <div>
                         <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
                         <select name="pegawai_id" id="pegawai_id" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
-                            <option value="">-- Pilih Pegawai --</option>
                             @foreach($pegawais as $p)
                             <option value="{{ $p->id }}" data-gaji-pokok="{{ $p->gaji_pokok }}" {{ $gaji->pegawai_id == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <!-- Bulan -->
                     <div>
                         <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
                         <select name="bulan" id="bulan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
@@ -34,13 +31,11 @@
                         </select>
                     </div>
 
-                    <!-- Tahun -->
                     <div>
                         <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
                         <input type="number" name="tahun" id="tahun" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ $gaji->tahun }}" required>
                     </div>
 
-                    <!-- Gaji Pokok -->
                     <div>
                         <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
                         <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ $gaji->gaji_pokok }}" required>
@@ -48,14 +43,12 @@
                 </div>
             </div>
 
-            <!-- Tunjangan Dinamis -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Tunjangan</h3>
                     <button type="button" id="add-tunjangan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Tunjangan</button>
                 </div>
                 <div id="tunjangan-container" class="space-y-3">
-                    {{-- Tampilkan data tunjangan yang sudah ada --}}
                     @foreach($gaji->tunjanganDetails as $index => $detail)
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 border rounded-md">
                         <div>
@@ -80,14 +73,12 @@
                 </div>
             </div>
 
-            <!-- Potongan Dinamis -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Potongan</h3>
                     <button type="button" id="add-potongan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Potongan</button>
                 </div>
                 <div id="potongan-container" class="space-y-3">
-                    {{-- Tampilkan data potongan yang sudah ada --}}
                      @foreach($gaji->potonganDetails as $index => $detail)
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 border rounded-md">
                         <div>
@@ -112,7 +103,6 @@
                 </div>
             </div>
             
-            <!-- Ringkasan Gaji -->
             <div class="bg-gray-50 p-6 rounded-lg shadow">
                  <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
                  <div class="space-y-2 text-sm">
@@ -123,7 +113,6 @@
                  </div>
             </div>
 
-            <!-- Submit -->
             <div class="flex items-center gap-4 pt-4">
                 <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow">Update</button>
                 <a href="{{ route('admin.gaji.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
@@ -154,8 +143,10 @@
                 document.getElementById('summary-gaji-bersih').textContent = formatter.format(gajiBersih);
             }
 
-            form.addEventListener('input', calculateTotals);
-            form.addEventListener('change', calculateTotals);
+            // PERBAIKAN: Tambahkan event listener ke semua input yang sudah ada saat halaman dimuat
+            document.querySelectorAll('#gaji_pokok, .jumlah-input').forEach(input => {
+                input.addEventListener('input', calculateTotals);
+            });
 
             document.getElementById('pegawai_id').addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
@@ -164,9 +155,18 @@
                 calculateTotals();
             });
 
-            // Tentukan index awal berdasarkan data yang sudah ada dari server
             let tunjanganIndex = {{ $gaji->tunjanganDetails->count() }};
             let potonganIndex = {{ $gaji->potonganDetails->count() }};
+            
+            function handleDropdownChange(event) {
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                const defaultValue = selectedOption.getAttribute('data-default');
+                const jumlahInput = event.target.closest('.grid').querySelector('.jumlah-input');
+                if (defaultValue) {
+                    jumlahInput.value = defaultValue;
+                }
+                calculateTotals();
+            }
 
             function addNewRow(type) {
                 const isTunjangan = type === 'tunjangan';
@@ -196,33 +196,28 @@
                     </div>
                 `;
                 container.appendChild(newRow);
+                
+                newRow.querySelector(`.${selectClass}`).addEventListener('change', handleDropdownChange);
+                newRow.querySelector('.jumlah-input').addEventListener('input', calculateTotals);
+                newRow.querySelector('.remove-row').addEventListener('click', function() {
+                    newRow.remove(); 
+                    calculateTotals();
+                });
+                
+                calculateTotals();
             }
             
             document.getElementById('add-tunjangan').addEventListener('click', () => addNewRow('tunjangan'));
             document.getElementById('add-potongan').addEventListener('click', () => addNewRow('potongan'));
             
-            // Menggunakan event delegation untuk menangani semua klik di dalam form
             form.addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-row')) {
                     e.target.closest('.grid').remove();
                     calculateTotals();
                 }
             });
-            
-            form.addEventListener('change', function(e) {
-                if (e.target.classList.contains('tunjangan-select') || e.target.classList.contains('potongan-select')) {
-                    const selectedOption = e.target.options[e.target.selectedIndex];
-                    const defaultValue = selectedOption.getAttribute('data-default');
-                    const jumlahInput = e.target.closest('.grid').querySelector('.jumlah-input');
-                    if (defaultValue) {
-                        jumlahInput.value = defaultValue;
-                    }
-                }
-            });
 
-            // Kalkulasi total saat halaman pertama kali dimuat
             calculateTotals();
         });
     </script>
 </x-app-layout>
-
