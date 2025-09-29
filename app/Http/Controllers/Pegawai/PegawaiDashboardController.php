@@ -19,43 +19,43 @@ class PegawaiDashboardController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $pegawai = Pegawai::where('id_users', $user->id_users)->firstOrFail();
+        $pegawai = Pegawai::where('user_id', $user->id)->firstOrFail();
 
         $bulanSekarang = Carbon::now()->month;
         $tahunSekarang = Carbon::now()->year;
 
         // Total Hadir
-        $totalHariMasuk = Kehadiran::where('id_pegawai', $pegawai->id_pegawai)
+        $totalHariMasuk = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
             ->where('status', 'Hadir')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Izin
-        $totalIzin = Kehadiran::where('id_pegawai', $pegawai->id_pegawai)
+        $totalIzin = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
             ->where('status', 'Izin')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Sakit
-        $totalSakit = Kehadiran::where('id_pegawai', $pegawai->id_pegawai)
+        $totalSakit = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
             ->where('status', 'Sakit')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Gaji bulan ini
-        $totalGaji = Gaji::where('id_pegawai', $pegawai->id_pegawai)
+        $totalGaji = Gaji::where('pegawai_id', $pegawai->id_pegawai)
             ->where('bulan', $bulanSekarang)
             ->where('tahun', $tahunSekarang)
-            ->sum('total_gaji');
+            ->sum('gaji_bersih');
 
         // Grafik Gaji per bulan
-        $gajiPerBulan = Gaji::where('id_pegawai', $pegawai->id_pegawai)
+        $gajiPerBulan = Gaji::where('pegawai_id', $pegawai->id_pegawai)
             ->where('tahun', $tahunSekarang)
             ->orderBy('bulan')
-            ->pluck('total_gaji', 'bulan')
+            ->pluck('gaji_bersih', 'bulan')
             ->toArray();
 
         $bulanArray = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];

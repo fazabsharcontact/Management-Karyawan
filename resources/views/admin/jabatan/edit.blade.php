@@ -1,28 +1,31 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">✏️ Edit Jabatan</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">✏️ Edit Jabatan: {{ $jabatan->nama_jabatan }}</h2>
     </x-slot>
 
     <div class="p-6">
-        <form method="POST" action="{{ route('admin.jabatan.update', $jabatan->id_jabatan) }}" class="space-y-4">
-            @csrf
-            @method('PUT')
-            <div>
-                <label>Nama Jabatan</label>
-                <input type="text" name="nama_jabatan" value="{{ $jabatan->nama_jabatan }}" 
-                       class="border rounded w-full p-2" required>
-            </div>
-            <div>
-                <label>Tunjangan</label>
-                <input type="number" name="tunjangan" value="{{ $jabatan->tunjangan }}" 
-                       class="border rounded w-full p-2" required>
-            </div>
-            <div>
-                <label>Gaji Awal</label>
-                <input type="number" name="gaji_awal" value="{{ $jabatan->gaji_awal }}" 
-                       class="border rounded w-full p-2" required>
-            </div>
-            <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Update</button>
-        </form>
+        <div class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto">
+            {{-- PERBAIKAN: Gunakan $jabatan->id --}}
+            <form method="POST" action="{{ route('admin.jabatan.update', $jabatan->id) }}" class="space-y-4">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label for="nama_jabatan" class="block font-medium text-sm text-gray-700">Nama Jabatan</label>
+                    <input type="text" name="nama_jabatan" id="nama_jabatan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('nama_jabatan', $jabatan->nama_jabatan) }}" required autofocus>
+                </div>
+                <div>
+                    <label for="tunjangan" class="block font-medium text-sm text-gray-700">Tunjangan</label>
+                    <input type="number" name="tunjangan" id="tunjangan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('tunjangan', $jabatan->tunjangan) }}" required>
+                </div>
+                <div>
+                    <label for="gaji_awal" class="block font-medium text-sm text-gray-700">Gaji Awal</label>
+                    <input type="number" name="gaji_awal" id="gaji_awal" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('gaji_awal', $jabatan->gaji_awal) }}" required>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow">Update</button>
+                    <a href="{{ route('admin.jabatan.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
+                </div>
+            </form>
+        </div>
     </div>
 </x-app-layout>

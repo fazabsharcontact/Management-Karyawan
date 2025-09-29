@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Jabatan;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class JabatanController extends Controller
 {
+    /**
+     * Menampilkan daftar semua data jabatan dengan filter.
+     */
     public function index(Request $request)
     {
         $search = $request->get('search');
@@ -15,67 +19,81 @@ class JabatanController extends Controller
 
         $query = Jabatan::query();
 
-        if ($search) {
-            $query->where('nama_jabatan', 'like', "%$search%");
-        }
+        $query->when($search, function ($q) use ($search) {
+            $q->where('nama_jabatan', 'like', "%{$search}%");
+        });
 
-        if ($jabatanFilter) {
-            $query->where('nama_jabatan', $jabatanFilter);
-        }
+        $query->when($jabatanFilter, function ($q) use ($jabatanFilter) {
+            $q->where('nama_jabatan', $jabatanFilter);
+        });
 
-        $jabatan = $query->get();
-        $jabatanList = Jabatan::pluck('nama_jabatan');
+        // PERBAIKAN: Gunakan nama variabel yang konsisten: 'jabatans'
+        $jabatans = $query->latest()->get();
 
-        return view('admin.jabatan.index', compact('jabatan', 'jabatanList'));
+        return view('admin.jabatan.index', compact('jabatans'));
     }
 
+    /**
+     * Menampilkan form untuk membuat jabatan baru.
+     */
     public function create()
     {
         return view('admin.jabatan.create');
     }
 
+    /**
+     * Menyimpan jabatan baru ke database.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'nama_jabatan' => 'required|unique:jabatan,nama_jabatan',
-            'tunjangan' => 'required|numeric',
-            'gaji_awal' => 'required|numeric',
+        $validated = $request->validate([
+            // PERBAIKAN: Nama tabel di 'unique' harus 'jabatans' (plural)
+            'nama_jabatan' => 'required|unique:jabatans,nama_jabatan',
+            'tunjangan' => 'required|numeric|min:0',
+            'gaji_awal' => 'required|numeric|min:0', // Menambahkan validasi untuk gaji_awal
         ]);
 
-        Jabatan::create($request->all());
+        Jabatan::create($validated);
 
         return redirect()->route('admin.jabatan.index')
-            ->with('success', 'Jabatan berhasil ditambahkan');
+            ->with('success', 'Jabatan berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    /**
+     * Menampilkan form untuk mengedit jabatan.
+     * Menggunakan Route Model Binding untuk kode yang lebih bersih.
+     */
+    public function edit(Jabatan $jabatan)
     {
-        $jabatan = Jabatan::findOrFail($id);
         return view('admin.jabatan.edit', compact('jabatan'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Memperbarui data jabatan di database.
+     */
+    public function update(Request $request, Jabatan $jabatan)
     {
-        $jabatan = Jabatan::findOrFail($id);
-
-        $request->validate([
-            'nama_jabatan' => 'required|unique:jabatan,nama_jabatan,' . $jabatan->id_jabatan . ',id_jabatan',
-            'tunjangan' => 'required|numeric',
-            'gaji_awal' => 'required|numeric',
+        $validated = $request->validate([
+            // PERBAIKAN: Aturan 'unique' yang lebih modern dan aman
+            'nama_jabatan' => ['required', Rule::unique('jabatans')->ignore($jabatan->id)],
+            'tunjangan' => 'required|numeric|min:0',
+            'gaji_awal' => 'required|numeric|min:0',
         ]);
 
-        $jabatan->update($request->all());
+        $jabatan->update($validated);
 
         return redirect()->route('admin.jabatan.index')
-            ->with('success', 'Jabatan berhasil diperbarui');
+            ->with('success', 'Jabatan berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    /**
+     * Menghapus data jabatan dari database.
+     */
+    public function destroy(Jabatan $jabatan)
     {
-        $jabatan = Jabatan::findOrFail($id);
         $jabatan->delete();
 
         return redirect()->route('admin.jabatan.index')
-            ->with('success', 'Jabatan berhasil dihapus');
+            ->with('success', 'Jabatan berhasil dihapus.');
     }
 }

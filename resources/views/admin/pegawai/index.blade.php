@@ -36,27 +36,39 @@
                     <tr>
                         <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Nama</th>
                         <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Jabatan</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji</th>
+                        <!-- --- Kolom Baru --- -->
+                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Tim / Divisi</th>
+                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji Pokok</th>
                         <th class="border-b px-4 py-2 text-center text-sm font-medium text-gray-600">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($pegawai as $p)
+                    @forelse($pegawai as $p)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="border-b px-4 py-2 text-gray-800">{{ $p->nama }}</td>
                         <td class="border-b px-4 py-2 text-gray-800">
                             {{ $p->jabatan->nama_jabatan ?? 'Tidak Ada Jabatan' }}
                         </td>
+                        <!-- --- Kolom Baru --- -->
                         <td class="border-b px-4 py-2 text-gray-800">
-                            Rp {{ number_format($p->gaji, 0, ',', '.') }}
+                            @if ($p->tim)
+                                {{ $p->tim->nama_tim }}
+                                <span class="text-xs text-gray-500 block">{{ $p->tim->divisi->nama_divisi }}</span>
+                            @else
+                                <span class="text-gray-400 italic">-</span>
+                            @endif
+                        </td>
+                        <td class="border-b px-4 py-2 text-gray-800">
+                            {{-- PERBAIKAN: Gunakan gaji_pokok dari model --}}
+                            Rp {{ number_format($p->gaji_pokok, 0, ',', '.') }}
                         </td>
                         <td class="border-b px-4 py-2 text-center">
                             <div class="flex justify-center gap-2">
-                                <a href="{{ route('admin.pegawai.edit', $p->id_pegawai) }}" 
+                                <a href="{{ route('admin.pegawai.edit', $p->id) }}" 
                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">
                                     Edit
                                 </a>
-                                <form action="{{ route('admin.pegawai.destroy', $p->id_pegawai) }}" method="POST" 
+                                <form action="{{ route('admin.pegawai.destroy', $p->id) }}" method="POST" 
                                       onsubmit="return confirm('Hapus pegawai {{ $p->nama }}?')">
                                     @csrf
                                     @method('DELETE')
@@ -68,7 +80,11 @@
                             </div>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-gray-500">Tidak ada data pegawai yang ditemukan.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
 
