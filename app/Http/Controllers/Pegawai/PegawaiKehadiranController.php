@@ -7,17 +7,22 @@ use Illuminate\Http\Request;
 use App\Models\Kehadiran;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Pegawai;
 
 class PegawaiKehadiranController extends Controller
 {
     public function index(Request $request)
     {
-        $pegawaiId = Auth::id(); // diasumsikan pegawai login via auth
+        $pegawai = Pegawai::where('user_id', Auth::id())->first();
+
+        if (!$pegawai) {
+            return redirect()->back()->with('error', 'Pegawai tidak ditemukan!');
+        }
 
         $tahun = $request->get('tahun', now()->year);
         $bulan = $request->get('bulan', now()->month);
 
-        $kehadiran = Kehadiran::where('id_pegawai', $pegawaiId)
+        $kehadiran = Kehadiran::where('pegawai_id', $pegawai->id) // ✅ pakai id
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->orderByDesc('tanggal')
@@ -28,11 +33,16 @@ class PegawaiKehadiranController extends Controller
 
     public function store(Request $request)
     {
-        $pegawaiId = Auth::id();
+        $pegawai = Pegawai::where('user_id', Auth::id())->first();
+
+        if (!$pegawai) {
+            return redirect()->back()->with('error', 'Pegawai tidak ditemukan!');
+        }
+
         $tanggal = Carbon::today()->toDateString();
 
         // Cek sudah absen atau belum
-        $sudahAbsen = Kehadiran::where('id_pegawai', $pegawaiId)
+        $sudahAbsen = Kehadiran::where('pegawai_id', $pegawai->id) // ✅ pakai id
             ->whereDate('tanggal', $tanggal)
             ->exists();
 
@@ -41,7 +51,7 @@ class PegawaiKehadiranController extends Controller
         }
 
         Kehadiran::create([
-            'id_pegawai' => $pegawaiId,
+            'pegawai_id' => $pegawai->id, // ✅ pakai id
             'tanggal' => $tanggal,
             'status' => $request->status
         ]);

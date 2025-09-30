@@ -11,12 +11,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Memanggil seeder lain secara berurutan
-        // Urutan ini penting untuk menjaga integritas relasi antar tabel
+
         $this->call([
             UserSeeder::class,
             StrukturOrganisasiSeeder::class,
             PegawaiSeeder::class,
+            SisaCutiSeeder::class,
             MasterGajiSeeder::class,
             AktivitasPegawaiSeeder::class,
         ]);

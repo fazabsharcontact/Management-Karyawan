@@ -5,92 +5,69 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    @if(Auth::user()->role === 'admin')
-                        <a href="{{ route('admin.dashboard') }}">
-                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                        </a>
-                    @elseif(Auth::user()->role === 'pegawai')
-                        <a href="{{ route('pegawai.dashboard') }}">
-                            <x-application-logo class="block h-9 w-auto fill-current text-blue-600" />
-                        </a>
-                    @endif
+                    <a href="{{ route('dashboard') }}">
+                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    {{-- Menu untuk Admin --}}
-                    @if(Auth::user()->role === 'admin')
-                        <x-nav-link :href="route('admin.dashboard')" 
-                            :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        {{ __('Dashboard') }}
+                    </x-nav-link>
 
-                        <x-nav-link :href="route('admin.pengumuman.index')" 
-                                    :active="request()->routeIs('admin.pengumuman.*')">
-                            {{ __('Pengumuman') }}
-                        </x-nav-link>
+                    {{-- PERBAIKAN: Menambahkan @auth untuk memastikan user sudah login --}}
+                    @auth
+                        {{-- Menu untuk Admin --}}
+                        @if(Auth::user()->role == 'admin')
+                            <x-nav-link :href="route('admin.pegawai.index')" :active="request()->routeIs('admin.pegawai.*')">
+                                {{ __('Pegawai') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('admin.jabatan.index')" :active="request()->routeIs('admin.jabatan.*')">
+                                {{ __('Jabatan') }}
+                            </x-nav-link>
+                             <x-nav-link :href="route('admin.tim-divisi.index')" :active="request()->routeIs('admin.tim-divisi.*')">
+                                {{ __('Tim & Divisi') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('admin.gaji.index')" :active="request()->routeIs('admin.gaji.*')">
+                                {{ __('Gaji') }}
+                            </x-nav-link>
+                             <x-nav-link :href="route('admin.tunjangan-potongan.index')" :active="request()->routeIs('admin.tunjangan-potongan.*')">
+                                {{ __('Tunjangan & Potongan') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('admin.meeting.index')" :active="request()->routeIs('admin.meeting.*')">
+                                {{ __('Meeting') }}
+                            </x-nav-link>
+                             <x-nav-link :href="route('admin.cuti.index')" :active="request()->routeIs('admin.cuti.*')">
+                                {{ __('Cuti') }}
+                            </x-nav-link>
+                             <x-nav-link :href="route('admin.pengumuman.index')" :active="request()->routeIs('admin.pengumuman.*')">
+                                {{ __('Pengumuman') }}
+                            </x-nav-link>
+                             <x-nav-link :href="route('admin.laporan.performa')" :active="request()->routeIs('admin.laporan.*')">
+                                {{ __('Laporan') }}
+                            </x-nav-link>
 
-                        <x-nav-link :href="route('admin.pegawai.index')" 
-                            :active="request()->routeIs('admin.pegawai.*')">
-                            {{ __('Pegawai') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.gaji.index')" 
-                            :active="request()->routeIs('admin.gaji.*')">
-                            {{ __('Gaji') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.tunjangan-potongan.index')" 
-                                    :active="request()->routeIs('admin.tunjangan-potongan.*')">
-                            {{ __('Tunjangan & Potongan') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.jabatan.index')" 
-                            :active="request()->routeIs('admin.jabatan.*')">
-                            {{ __('Jabatan') }}
-                        </x-nav-link>
-                        
-                        <x-nav-link :href="route('admin.meeting.index')" 
-                                    :active="request()->routeIs('admin.meeting.*')">
-                            {{ __('Meeting') }}
-                        </x-nav-link>
-
-                       <x-nav-link :href="route('admin.tim-divisi.index')" 
-                                    :active="request()->routeIs('admin.tim-divisi.*')">
-                            {{ __('Tim & Divisi') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.cuti.index')" 
-                                    :active="request()->routeIs('admin.cuti.*')">
-                            {{ __('Manajemen Cuti') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.laporan.performa')" 
-                                    :active="request()->routeIs('admin.laporan.performa')">
-                            {{ __('Laporan Performa') }}
-                        </x-nav-link>
-
-
-                         
-                    @endif
-
-                    {{-- Menu untuk Pegawai --}}
-                    @if(Auth::user()->role === 'pegawai')
-                        <x-nav-link :href="route('pegawai.dashboard')" 
-                            :active="request()->routeIs('pegawai.dashboard')">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('pegawai.gaji')" 
-                            :active="request()->routeIs('pegawai.gaji.*')">
-                            {{ __('Gaji') }}
-                        </x-nav-link> 
-
-                        <x-nav-link :href="route('pegawai.kehadiran.index')" 
-                            :active="request()->routeIs('pegawai.kehadiran.*')">
-                            {{ __('Kehadiran') }}
-                        </x-nav-link> 
-                    @endif
+                        {{-- Menu untuk Pegawai --}}
+                        @elseif(Auth::user()->role == 'pegawai')
+                            {{-- PERBAIKAN: Menambahkan link yang diminta --}}
+                            <x-nav-link :href="route('pegawai.dashboard')" :active="request()->routeIs('pegawai.dashboard')">
+                                {{ __('Dashboard') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('pegawai.gaji')" :active="request()->routeIs('pegawai.gaji.*')">
+                                {{ __('Gaji') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('pegawai.kehadiran.index')" :active="request()->routeIs('pegawai.kehadiran.*')">
+                                {{ __('Kehadiran') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('pegawai.cuti.index')" :active="request()->routeIs('pegawai.cuti.*')">
+                                {{ __('Pengajuan Cuti') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('pegawai.pengumuman.index')" :active="request()->routeIs('pegawai.pengumuman.*')">
+                                {{ __('Pengumuman') }}
+                            </x-nav-link>
+                        @endif
+                    @endauth
                 </div>
             </div>
 
@@ -99,7 +76,7 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+                            <div>{{ Auth::user()->username ?? 'Guest' }}</div>
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -143,7 +120,7 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('dashboard')">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
         </div>
@@ -151,8 +128,8 @@
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name ?? '' }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email ?? '' }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
@@ -174,3 +151,4 @@
         </div>
     </div>
 </nav>
+

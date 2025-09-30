@@ -16,14 +16,14 @@ class PegawaiGajiController extends Controller
         $tahun = request('tahun', Carbon::now()->year);
         $bulan = request('bulan', Carbon::now()->month);
 
-        $riwayat = Gaji::where('id_pegawai', $pegawaiId)
+        $riwayat = Gaji::where('pegawai_id', $pegawaiId)
             ->where('tahun', $tahun)
             ->where('bulan', $bulan)
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
             ->get();
 
-        $detail = Gaji::where('id_pegawai', $pegawaiId)
+        $detail = Gaji::where('pegawai_id', $pegawaiId)
             ->orderByDesc('updated_at')
             ->first();
 
