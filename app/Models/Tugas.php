@@ -30,4 +30,8 @@ class Tugas extends Model
     {
         return $this->belongsTo(Pegawai::class, 'penerima_id');
     }
+    public function pengumpulan()
+    {
+        return $this->hasOne(TugasPengumpulan::class, 'tugas_id');
+    }
 }

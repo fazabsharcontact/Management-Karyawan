@@ -57,7 +57,11 @@
             },
             options: {
                 responsive: true,
-                scales: { y: { beginAtZero: true } }
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
             }
         });
     </script>

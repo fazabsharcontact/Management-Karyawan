@@ -13,46 +13,48 @@ class PegawaiDashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $userId = Auth::id();
+        $pegawai = Pegawai::where('user_id', $userId)->first();
 
-        if (!$user || $user->role !== 'pegawai') {
-            abort(403, 'Unauthorized');
+        if (!$pegawai) {
+            return redirect()->back()->with('error', 'Data pegawai Anda tidak ditemukan.');
         }
 
-        $pegawai = Pegawai::where('user_id', $user->id)->firstOrFail();
+        // Simpan ID Pegawai yang benar ($pegawai->id)
+        $pegawaiId = $pegawai->id; // <-- Gunakan yang benar
 
         $bulanSekarang = Carbon::now()->month;
         $tahunSekarang = Carbon::now()->year;
 
         // Total Hadir
-        $totalHariMasuk = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        $totalHariMasuk = Kehadiran::where('pegawai_id', $pegawaiId) // Ganti $pegawai->id_pegawai
             ->where('status', 'Hadir')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Izin
-        $totalIzin = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        $totalIzin = Kehadiran::where('pegawai_id', $pegawaiId) // Ganti $pegawai->id_pegawai
             ->where('status', 'Izin')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Sakit
-        $totalSakit = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        $totalSakit = Kehadiran::where('pegawai_id', $pegawaiId) // Ganti $pegawai->id_pegawai
             ->where('status', 'Sakit')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
         // Total Gaji bulan ini
-        $totalGaji = Gaji::where('pegawai_id', $pegawai->id_pegawai)
+        $totalGaji = Gaji::where('pegawai_id', $pegawaiId) // Ganti $pegawai->id_pegawai
             ->where('bulan', $bulanSekarang)
             ->where('tahun', $tahunSekarang)
             ->sum('gaji_bersih');
 
         // Grafik Gaji per bulan
-        $gajiPerBulan = Gaji::where('pegawai_id', $pegawai->id_pegawai)
+        $gajiPerBulan = Gaji::where('pegawai_id', $pegawaiId) // Ganti $pegawai->id_pegawai
             ->where('tahun', $tahunSekarang)
             ->orderBy('bulan')
             ->pluck('gaji_bersih', 'bulan')

@@ -43,6 +43,9 @@
                         <x-nav-link :href="route('admin.jabatan.index')" :active="request()->routeIs('admin.jabatan.*')">
                             {{ __('Jabatan') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.tugas_pengumpulan.index')" :active="request()->routeIs('admin.pengumpulan.*')">
+                            {{ __('Pengumpulan Tugas') }}
+                        </x-nav-link>
 
                         <x-nav-link :href="route('admin.meeting.index')" :active="request()->routeIs('admin.meeting.*')">
                             {{ __('Meeting') }}
@@ -74,6 +77,13 @@
                         <x-nav-link :href="route('pegawai.kehadiran.index')" :active="request()->routeIs('pegawai.kehadiran.*')">
                             {{ __('Kehadiran') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('pegawai.tugas.index')" :active="request()->routeIs('pegawai.tugas.*')">
+                            {{ __('Tugas') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('pegawai.meeting.index')" :active="request()->routeIs('meeting.tugas.*')">
+                            {{ __('Meeting') }}
+                        </x-nav-link>
+
                         <x-nav-link :href="route('pegawai.cuti.index')" :active="request()->routeIs('pegawai.cuti.*')">
                             {{ __('Pengajuan Cuti') }}
                         </x-nav-link>
