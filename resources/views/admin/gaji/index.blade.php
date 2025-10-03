@@ -6,7 +6,6 @@
     </x-slot>
 
     <div class="p-6 space-y-6">
-        {{-- --- BAGIAN BARU: Menampilkan Pegawai Belum Gajian --- --}}
         @if(isset($pegawaiBelumGajian) && $pegawaiBelumGajian->isNotEmpty())
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg shadow">
                 <div class="flex">
@@ -30,93 +29,120 @@
                 </div>
             </div>
         @endif
-        {{-- -------------------------------------------------------- --}}
 
         <div class="bg-white rounded-lg shadow-md p-4">
-            <form method="GET" class="flex flex-col md:flex-row gap-3">
-                <input type="text" name="search" placeholder="Cari nama pegawai..." 
-                       class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200"
-                       value="{{ request('search') }}">
-                <select name="jabatan" 
-                        class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200">
-                    <option value="">Semua Jabatan</option>
-                    @foreach($jabatan as $j)
-                        <option value="{{ $j->nama_jabatan }}" {{ request('jabatan') == $j->nama_jabatan ? 'selected' : '' }}>
-                            {{ $j->nama_jabatan }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit" 
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
-                    Filter
-                </button>
+            {{-- --- PERBAIKAN: Form diubah menjadi grid --- --}}
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                <div class="lg:col-span-2">
+                    <label for="search" class="block text-sm font-medium text-gray-700">Cari Pegawai</label>
+                    <input type="text" name="search" id="search" placeholder="Ketik nama..." 
+                           class="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:ring focus:ring-blue-200"
+                           value="{{ request('search') }}">
+                </div>
+                <div>
+                    <label for="jabatan" class="block text-sm font-medium text-gray-700">Jabatan</label>
+                    <select name="jabatan" id="jabatan"
+                            class="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:ring focus:ring-blue-200">
+                        <option value="">Semua Jabatan</option>
+                        @foreach($jabatan as $j)
+                            <option value="{{ $j->nama_jabatan }}" {{ request('jabatan') == $j->nama_jabatan ? 'selected' : '' }}>
+                                {{ $j->nama_jabatan }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                {{-- --- INPUT BARU UNTUK BULAN & TAHUN --- --}}
+                <div>
+                    <label for="bulan" class="block text-sm font-medium text-gray-700">Bulan</label>
+                    <select name="bulan" id="bulan" class="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:ring focus:ring-blue-200">
+                        <option value="">Semua Bulan</option>
+                        @for($i = 1; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ request('bulan') == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label for="tahun" class="block text-sm font-medium text-gray-700">Tahun</label>
+                    <input type="number" name="tahun" id="tahun" placeholder="Contoh: 2024"
+                           class="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:ring focus:ring-blue-200"
+                           value="{{ request('tahun') }}">
+                </div>
+                <div class="col-span-full lg:col-span-1 flex justify-end">
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow w-full">
+                        Filter
+                    </button>
+                </div>
             </form>
         </div>
         
         <div class="bg-white rounded-lg shadow-md p-4">
-            <table class="w-full border-collapse">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Nama Pegawai</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Jabatan</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Bulan</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Tahun</th>
-                        <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji Bersih</th>
-                        <th class="border-b px-4 py-2 text-center text-sm font-medium text-gray-600">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-                        $bulan_nama = [
-                            1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 
-                            5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 
-                            9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"
-                        ];
-                    @endphp
-                    @forelse($gaji as $g)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->nama ?? '-' }}</td>
-                        <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->jabatan->nama_jabatan ?? '-' }}</td>
-                        <td class="border-b px-4 py-2 text-gray-800">{{ $bulan_nama[$g->bulan] ?? '-' }}</td>
-                        <td class="border-b px-4 py-2 text-gray-800">{{ $g->tahun }}</td>
-                        <td class="border-b px-4 py-2 text-gray-800">Rp {{ number_format($g->gaji_bersih, 0, ',', '.') }}</td>
-                        <td class="border-b px-4 py-2 text-center">
-                            <div class="flex justify-center gap-2">
-                                <a href="{{ route('admin.gaji.slip', $g->id) }}" target="_blank"
-                                   class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm shadow">
-                                    Slip Gaji
-                                </a>
-                                <a href="{{ route('admin.gaji.edit', $g->id) }}" 
-                                   class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">
-                                    Edit
-                                </a>
-                                <form action="{{ route('admin.gaji.destroy', $g->id) }}" method="POST" 
-                                      onsubmit="return confirm('Hapus data gaji ini?')" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" 
-                                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm shadow">
-                                        Hapus
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="text-center text-gray-500 py-4">Tidak ada data gaji yang ditemukan.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Nama Pegawai</th>
+                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Jabatan</th>
+                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Bulan</th>
+                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Tahun</th>
+                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji Bersih</th>
+                            <th class="border-b px-4 py-2 text-center text-sm font-medium text-gray-600">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $bulan_nama = [
+                                1=>"Januari", 2=>"Februari", 3=>"Maret", 4=>"April", 5=>"Mei", 6=>"Juni", 
+                                7=>"Juli", 8=>"Agustus", 9=>"September", 10=>"Oktober", 11=>"November", 12=>"Desember"
+                            ];
+                        @endphp
+                        @forelse($gaji as $g)
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->nama ?? '-' }}</td>
+                            <td class="border-b px-4 py-2 text-gray-800">{{ $g->pegawai->jabatan->nama_jabatan ?? '-' }}</td>
+                            <td class="border-b px-4 py-2 text-gray-800">{{ $bulan_nama[$g->bulan] ?? '-' }}</td>
+                            <td class="border-b px-4 py-2 text-gray-800">{{ $g->tahun }}</td>
+                            <td class="border-b px-4 py-2 text-gray-800">Rp {{ number_format($g->gaji_bersih, 0, ',', '.') }}</td>
+                            <td class="border-b px-4 py-2 text-center">
+                                <div class="flex justify-center gap-2">
+                                    <a href="{{ route('admin.gaji.slip', $g->id) }}" target="_blank"
+                                       class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm shadow">
+                                        Slip Gaji
+                                    </a>
+                                    <a href="{{ route('admin.gaji.edit', $g->id) }}" 
+                                       class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('admin.gaji.destroy', $g->id) }}" method="POST" 
+                                          onsubmit="return confirm('Hapus data gaji ini?')" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" 
+                                                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm shadow">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-500 py-4">Tidak ada data gaji yang ditemukan.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
              <div class="mt-4">
                 {{ $gaji->appends(request()->query())->links('vendor.pagination.tailwind') }}
             </div>
-
-            <div class="mt-6">
+            <div class="mt-6 flex gap-4">
                 <a href="{{ route('admin.gaji.create') }}" 
                    class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
-                    + Tambah Gaji
+                    + Tambah Gaji Individual
+                </a>
+                <a href="{{ route('admin.gaji-massal.langkah1') }}" 
+                   class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow">
+                    + Tambah Gaji Massal
                 </a>
             </div>
         </div>

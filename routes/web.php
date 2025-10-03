@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\MeetingController;
 use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\PengumumanController;
 use App\Http\Controllers\Admin\LaporanPerformaController;
+use App\Http\Controllers\Admin\GajiMassalController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -66,6 +67,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // --- Rute Laporan (Dirapikan) ---
     Route::get('laporan/performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
     Route::get('laporan/performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
+    Route::get('gaji-massal/langkah-1', [GajiMassalController::class, 'langkahSatu'])->name('admin.gaji-massal.langkah1');
+    Route::post('gaji-massal/langkah-2', [GajiMassalController::class, 'langkahDua'])->name('admin.gaji-massal.langkah2');
+    Route::post('gaji-massal/simpan', [GajiMassalController::class, 'simpan'])->name('admin.gaji-massal.simpan');
 });
 // PegawaiDashboard
 Route::prefix('pegawai')->middleware(['auth', 'role:pegawai'])->group(function () {

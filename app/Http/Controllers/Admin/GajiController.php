@@ -12,7 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon; // Pastikan Carbon di-import
+use Carbon\Carbon;
 
 class GajiController extends Controller
 {
@@ -21,50 +21,55 @@ class GajiController extends Controller
      */
     public function index(Request $request)
     {
+        // Ambil semua input filter
         $search = $request->get('search');
         $jabatanFilter = $request->get('jabatan');
+        $bulanFilter = $request->get('bulan');
+        $tahunFilter = $request->get('tahun');
 
         $query = Gaji::with(['pegawai.jabatan'])->latest();
 
+        // Terapkan filter pencarian nama
         $query->when($search, function ($q) use ($search) {
             $q->whereHas('pegawai', function ($subQuery) use ($search) {
                 $subQuery->where('nama', 'like', "%{$search}%");
             });
         });
 
+        // Terapkan filter jabatan
         $query->when($jabatanFilter, function ($q) use ($jabatanFilter) {
             $q->whereHas('pegawai.jabatan', function ($subQuery) use ($jabatanFilter) {
                 $subQuery->where('nama_jabatan', $jabatanFilter);
             });
         });
 
+        // --- PERBAIKAN: Tambahkan filter bulan dan tahun ---
+        $query->when($bulanFilter, function ($q) use ($bulanFilter) {
+            $q->where('bulan', $bulanFilter);
+        });
+
+        $query->when($tahunFilter, function ($q) use ($tahunFilter) {
+            $q->where('tahun', $tahunFilter);
+        });
+
         $gaji = $query->paginate(10);
         $jabatan = Jabatan::orderBy('nama_jabatan')->get();
-
-        // --- LOGIKA BARU: Ambil data pegawai yang belum gajian ---
-        $pegawaiBelumGajian = collect(); // Defaultnya koleksi kosong
         
-        // Cek hanya jika hari ini sudah lewat tanggal 1
+        $pegawaiBelumGajian = collect();
         if (Carbon::now()->day > 1) {
             $bulanIni = Carbon::now()->month;
             $tahunIni = Carbon::now()->year;
 
-            // PERBAIKAN: Tambahkan kondisi 'where tanggal_masuk'
-            // Ambil semua pegawai yang sudah mulai bekerja,
-            // dan TIDAK MEMILIKI relasi Gaji untuk bulan dan tahun saat ini.
             $pegawaiBelumGajian = Pegawai::where('tanggal_masuk', '<=', Carbon::now())
                 ->whereDoesntHave('gajis', function ($query) use ($bulanIni, $tahunIni) {
                     $query->where('bulan', $bulanIni)->where('tahun', $tahunIni);
                 })->with('jabatan')->orderBy('nama')->get();
         }
         
-        // Kirim data baru ke view
         return view('admin.gaji.index', compact('gaji', 'jabatan', 'pegawaiBelumGajian'));
     }
 
-    /**
-     * Menampilkan form untuk membuat data gaji baru.
-     */
+    // ... (method lainnya tetap sama)
     public function create()
     {
         $pegawais = Pegawai::orderBy('nama')->get();
@@ -74,9 +79,6 @@ class GajiController extends Controller
         return view('admin.gaji.create', compact('pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
-    /**
-     * Menyimpan data gaji baru ke database.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -85,25 +87,23 @@ class GajiController extends Controller
             'tahun' => 'required|integer|min:2020',
             'gaji_pokok' => 'required|numeric|min:0',
             'tunjangans' => 'nullable|array',
-            'tunjangans.*.master_tunjangan_id' => 'required|exists:master_tunjangans,id',
-            'tunjangans.*.jumlah' => 'required|numeric|min:0',
-            'tunjangans.*.keterangan' => 'nullable|string',
+            'tunjangans.*.master_tunjangan_id' => 'required_with:tunjangans|exists:master_tunjangans,id',
+            'tunjangans.*.jumlah' => 'required_with:tunjangans|numeric|min:0',
             'potongans' => 'nullable|array',
-            'potongans.*.master_potongan_id' => 'required|exists:master_potongans,id',
-            'potongans.*.jumlah' => 'required|numeric|min:0',
-            'potongans.*.keterangan' => 'nullable|string',
+            'potongans.*.master_potongan_id' => 'required_with:potongans|exists:master_potongans,id',
+            'potongans.*.jumlah' => 'required_with:potongans|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        DB::transaction(function () use ($request) {
             $totalTunjangan = collect($request->tunjangans)->sum('jumlah');
             $totalPotongan = collect($request->potongans)->sum('jumlah');
-            $gajiBersih = $validated['gaji_pokok'] + $totalTunjangan - $totalPotongan;
+            $gajiBersih = $request->gaji_pokok + $totalTunjangan - $totalPotongan;
 
             $gaji = Gaji::create([
-                'pegawai_id' => $validated['pegawai_id'],
-                'bulan' => $validated['bulan'],
-                'tahun' => $validated['tahun'],
-                'gaji_pokok' => $validated['gaji_pokok'],
+                'pegawai_id' => $request->pegawai_id,
+                'bulan' => $request->bulan,
+                'tahun' => $request->tahun,
+                'gaji_pokok' => $request->gaji_pokok,
                 'total_tunjangan' => $totalTunjangan,
                 'total_potongan' => $totalPotongan,
                 'gaji_bersih' => $gajiBersih,
@@ -125,9 +125,6 @@ class GajiController extends Controller
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil ditambahkan.');
     }
 
-    /**
-     * Menampilkan form untuk mengedit data gaji.
-     */
     public function edit(Gaji $gaji)
     {
         $gaji->load(['tunjanganDetails', 'potonganDetails']);
@@ -138,9 +135,6 @@ class GajiController extends Controller
         return view('admin.gaji.edit', compact('gaji', 'pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
-    /**
-     * Memperbarui data gaji di database.
-     */
     public function update(Request $request, Gaji $gaji)
     {
         $validated = $request->validate([
@@ -149,28 +143,26 @@ class GajiController extends Controller
             'tahun' => 'required|integer|min:2020',
             'gaji_pokok' => 'required|numeric|min:0',
             'tunjangans' => 'nullable|array',
-            'tunjangans.*.master_tunjangan_id' => 'required|exists:master_tunjangans,id',
-            'tunjangans.*.jumlah' => 'required|numeric|min:0',
-            'tunjangans.*.keterangan' => 'nullable|string',
+            'tunjangans.*.master_tunjangan_id' => 'required_with:tunjangans|exists:master_tunjangans,id',
+            'tunjangans.*.jumlah' => 'required_with:tunjangans|numeric|min:0',
             'potongans' => 'nullable|array',
-            'potongans.*.master_potongan_id' => 'required|exists:master_potongans,id',
-            'potongans.*.jumlah' => 'required|numeric|min:0',
-            'potongans.*.keterangan' => 'nullable|string',
+            'potongans.*.master_potongan_id' => 'required_with:potongans|exists:master_potongans,id',
+            'potongans.*.jumlah' => 'required_with:potongans|numeric|min:0',
         ]);
         
-        DB::transaction(function () use ($validated, $request, $gaji) {
+        DB::transaction(function () use ($request, $gaji) {
             $gaji->tunjanganDetails()->delete();
             $gaji->potonganDetails()->delete();
 
             $totalTunjangan = collect($request->tunjangans)->sum('jumlah');
             $totalPotongan = collect($request->potongans)->sum('jumlah');
-            $gajiBersih = $validated['gaji_pokok'] + $totalTunjangan - $totalPotongan;
+            $gajiBersih = $request->gaji_pokok + $totalTunjangan - $totalPotongan;
 
             $gaji->update([
-                'pegawai_id' => $validated['pegawai_id'],
-                'bulan' => $validated['bulan'],
-                'tahun' => $validated['tahun'],
-                'gaji_pokok' => $validated['gaji_pokok'],
+                'pegawai_id' => $request->pegawai_id,
+                'bulan' => $request->bulan,
+                'tahun' => $request->tahun,
+                'gaji_pokok' => $request->gaji_pokok,
                 'total_tunjangan' => $totalTunjangan,
                 'total_potongan' => $totalPotongan,
                 'gaji_bersih' => $gajiBersih,
@@ -192,18 +184,12 @@ class GajiController extends Controller
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil diperbarui.');
     }
 
-    /**
-     * Menghapus data gaji dari database.
-     */
     public function destroy(Gaji $gaji)
     {
         $gaji->delete();
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil dihapus.');
     }
 
-    /**
-     * Membuat dan mengunduh slip gaji dalam format PDF.
-     */
     public function unduhSlipGaji(Gaji $gaji)
     {
         $gaji->load(['pegawai.jabatan', 'tunjanganDetails.masterTunjangan', 'potonganDetails.masterPotongan']);
