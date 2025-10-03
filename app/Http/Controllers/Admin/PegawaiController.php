@@ -7,9 +7,9 @@ use App\Models\Pegawai;
 use App\Models\Jabatan;
 use App\Models\User;
 use App\Models\Divisi;
-use App\Models\SisaCuti; // <-- 1. Import model SisaCuti
+use App\Models\SisaCuti;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- 2. Import DB facade untuk transaksi
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -36,8 +36,9 @@ class PegawaiController extends Controller
             $q->where('nama', 'like', "%{$search}%");
         });
 
-        $pegawai = $query->latest()->get();
-        $jabatan = Jabatan::all();
+        // --- PERBAIKAN: Gunakan paginate() untuk membatasi 10 data per halaman ---
+        $pegawai = $query->latest()->paginate(10);
+        $jabatan = Jabatan::orderBy('nama_jabatan')->get();
 
         return view('admin.pegawai.index', compact('pegawai', 'jabatan'));
     }
@@ -47,7 +48,7 @@ class PegawaiController extends Controller
      */
     public function create()
     {
-        $jabatan = Jabatan::all();
+        $jabatan = Jabatan::orderBy('nama_jabatan')->get();
         $divisis = Divisi::with('tims')->get();
         return view('admin.pegawai.create', compact('jabatan', 'divisis'));
     }
@@ -71,10 +72,7 @@ class PegawaiController extends Controller
             'gaji' => ['required', 'numeric'],
         ]);
 
-        // --- 3. Gunakan Transaksi Database ---
-        // Ini memastikan jika salah satu proses gagal, semua akan dibatalkan.
         DB::transaction(function () use ($validated, $request) {
-            // Buat data User
             $user = User::create([
                 'username' => $validated['username'],
                 'email' => $validated['email'],
@@ -82,7 +80,6 @@ class PegawaiController extends Controller
                 'role' => 'pegawai',
             ]);
 
-            // Buat data Pegawai yang berelasi
             $pegawai = $user->pegawai()->create([
                 'jabatan_id' => $validated['jabatan'],
                 'tim_id' => $validated['tim_id'] ?? null,
@@ -94,10 +91,7 @@ class PegawaiController extends Controller
                 'gaji_pokok' => $validated['gaji'],
             ]);
 
-            // --- PERBAIKAN UTAMA: Buat data sisa_cuti secara otomatis ---
-            $pegawai->sisaCuti()->create([
-                'sisa_cuti' => 12, // Nilai default jatah cuti tahunan
-            ]);
+            $pegawai->sisaCuti()->create(['sisa_cuti' => 12]);
         });
 
         return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
@@ -108,7 +102,7 @@ class PegawaiController extends Controller
      */
     public function edit(Pegawai $pegawai)
     {
-        $jabatan = Jabatan::all();
+        $jabatan = Jabatan::orderBy('nama_jabatan')->get();
         $divisis = Divisi::with('tims')->get();
         $pegawai->load('user');
         return view('admin.pegawai.edit', compact('pegawai', 'jabatan', 'divisis'));

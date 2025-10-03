@@ -56,19 +56,15 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('divisi', DivisiController::class)->names('admin.divisi')->except(['index', 'show']);
     Route::resource('tim', TimController::class)->names('admin.tim')->except(['index', 'show']);
     Route::resource('meeting', MeetingController::class)->names('admin.meeting');
-    
-    // --- Rute untuk Manajemen Cuti ---
     Route::get('cuti', [CutiController::class, 'index'])->name('admin.cuti.index');
     Route::patch('cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('admin.cuti.updateStatus');
-    // --- RUTE BARU YANG HILANG ---
     Route::post('cuti/reset-tahunan', [CutiController::class, 'resetCutiTahunan'])->name('admin.cuti.resetTahunan');
 
     Route::resource('pengumuman', PengumumanController::class)
         ->names('admin.pengumuman')
         ->only(['index', 'create', 'store', 'destroy']);
-        
-    Route::get('laporan', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa'); // Mengarahkan laporan ke performa
-    Route::get('laporan/performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa.index'); // Alias untuk konsistensi
+    // --- Rute Laporan (Dirapikan) ---
+    Route::get('laporan/performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
     Route::get('laporan/performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
 });
 // PegawaiDashboard

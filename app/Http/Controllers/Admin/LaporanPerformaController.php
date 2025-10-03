@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Divisi;
 use App\Models\Pegawai;
 use App\Models\Tim;
+use App\Models\Kehadiran;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,22 +21,24 @@ class LaporanPerformaController extends Controller
             'tims' => Tim::orderBy('nama_tim')->get(),
             'pegawais' => Pegawai::orderBy('nama')->get(),
         ];
-        list($pegawais, $chartData, $filter) = $this->fetchPerformanceData($request);
-        return view('admin.laporan.performa', compact('pegawais', 'chartData', 'filter', 'filterOptions'));
+        
+        list($pegawais, $chartData, $filter, $totals, $kehadiranDetails) = $this->fetchPerformanceData($request);
+
+        return view('admin.laporan.performa', compact('pegawais', 'chartData', 'filter', 'filterOptions', 'totals', 'kehadiranDetails'));
     }
 
-    /**
-     * Meng-handle download laporan dalam format PDF.
-     */
     public function unduhPdf(Request $request)
     {
-        list($pegawais, $chartData, $filter) = $this->fetchPerformanceData($request);
-        
-        // --- PERBAIKAN: Kirim juga $chartData ke view PDF ---
+        // --- PERBAIKAN: Tangkap semua variabel yang dikembalikan ---
+        list($pegawais, $chartData, $filter, $totals, $kehadiranDetails) = $this->fetchPerformanceData($request, false); // `false` untuk menonaktifkan paginasi di PDF
+
+        // --- PERBAIKAN: Kirim semua data yang diperlukan ke view PDF ---
         $data = [
             'pegawais' => $pegawais,
             'filter' => $filter,
-            'chartData' => $chartData // Data ini akan digunakan untuk membuat URL gambar chart
+            'chartData' => $chartData,
+            'totals' => $totals,
+            'kehadiranDetails' => $kehadiranDetails
         ];
 
         $pdf = Pdf::loadView('admin.laporan.performa-pdf', $data)->setPaper('a4', 'landscape');
@@ -45,26 +48,17 @@ class LaporanPerformaController extends Controller
         return $pdf->download($namaFile);
     }
 
-    private function fetchPerformanceData(Request $request)
+    private function fetchPerformanceData(Request $request, $paginateKehadiran = true)
     {
-        // ... (method fetchPerformanceData tidak perlu diubah, sudah benar)
+        // ... (Logika filter periode dan hirarki tetap sama) ...
         $periode = $request->input('periode', 'bulanan');
         $tanggalMulai = Carbon::now()->startOfMonth();
         $tanggalSelesai = Carbon::now()->endOfMonth();
 
         switch ($periode) {
-            case 'harian':
-                $tanggalMulai = Carbon::now()->startOfDay();
-                $tanggalSelesai = Carbon::now()->endOfDay();
-                break;
-            case 'mingguan':
-                $tanggalMulai = Carbon::now()->startOfWeek();
-                $tanggalSelesai = Carbon::now()->endOfWeek();
-                break;
-            case 'tahunan':
-                $tanggalMulai = Carbon::now()->startOfYear();
-                $tanggalSelesai = Carbon::now()->endOfYear();
-                break;
+            case 'harian': $tanggalMulai = Carbon::now()->startOfDay(); $tanggalSelesai = Carbon::now()->endOfDay(); break;
+            case 'mingguan': $tanggalMulai = Carbon::now()->startOfWeek(); $tanggalSelesai = Carbon::now()->endOfWeek(); break;
+            case 'tahunan': $tanggalMulai = Carbon::now()->startOfYear(); $tanggalSelesai = Carbon::now()->endOfYear(); break;
             case 'custom':
                 if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {
                     $tanggalMulai = Carbon::parse($request->input('tanggal_mulai'))->startOfDay();
@@ -78,16 +72,16 @@ class LaporanPerformaController extends Controller
 
         if ($request->filled('divisi_id')) {
             $divisi = Divisi::find($request->input('divisi_id'));
-            $filterTitle = 'Divisi: ' . $divisi->nama_divisi;
-            $query->whereHas('tim.divisi', fn($q) => $q->where('id', $divisi->id));
+            if($divisi) $filterTitle = 'Divisi: ' . $divisi->nama_divisi;
+            $query->whereHas('tim.divisi', fn($q) => $q->where('id', $request->input('divisi_id')));
         } elseif ($request->filled('tim_id')) {
             $tim = Tim::find($request->input('tim_id'));
-            $filterTitle = 'Tim: ' . $tim->nama_tim;
-            $query->where('tim_id', $tim->id);
+            if($tim) $filterTitle = 'Tim: ' . $tim->nama_tim;
+            $query->where('tim_id', $request->input('tim_id'));
         } elseif ($request->filled('pegawai_id')) {
             $pegawai = Pegawai::find($request->input('pegawai_id'));
-            $filterTitle = 'Pegawai: ' . $pegawai->nama;
-            $query->where('id', $pegawai->id);
+            if($pegawai) $filterTitle = 'Pegawai: ' . $pegawai->nama;
+            $query->where('id', $request->input('pegawai_id'));
         }
 
         $pegawais = $query->with([
@@ -95,14 +89,47 @@ class LaporanPerformaController extends Controller
             'tugasDiterima' => fn($q) => $q->whereBetween('created_at', [$tanggalMulai, $tanggalSelesai])
         ])->orderBy('nama')->get();
 
-        $totalTugasSelesai = $pegawais->sum(fn($p) => $p->tugasDiterima->where('status', 'Selesai')->count());
-        $totalTugasBelumSelesai = $pegawais->sum(fn($p) => $p->tugasDiterima->where('status', '!=', 'Selesai')->count());
+        // --- PERBAIKAN: Paginasi opsional untuk detail kehadiran ---
+        $pegawaiIds = $pegawais->pluck('id');
+        $kehadiranQuery = Kehadiran::with('pegawai')
+            ->whereIn('pegawai_id', $pegawaiIds)
+            ->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai])
+            ->latest('tanggal');
 
+        $kehadiranDetails = $paginateKehadiran ? $kehadiranQuery->paginate(15, ['*'], 'kehadiran_page') : $kehadiranQuery->get();
+
+
+        // (Kalkulasi metrik, totals, dan chartData tetap sama)
+        $pegawais->each(function ($pegawai) {
+            $pegawai->total_hadir = $pegawai->kehadirans->where('status', 'Hadir')->count();
+            $pegawai->total_sakit_izin = $pegawai->kehadirans->whereIn('status', ['Sakit', 'Izin'])->count();
+            $totalHariKerja = $pegawai->kehadirans->count();
+            $jumlahTelat = $pegawai->kehadirans->where('status', 'Hadir')->where(fn($k) => is_null($k->jam_masuk) || $k->jam_masuk > '09:10:00')->count();
+            $pegawai->jumlah_telat = $jumlahTelat;
+            $pegawai->persentase_keterlambatan = ($pegawai->total_hadir > 0) ? round(($jumlahTelat / $pegawai->total_hadir) * 100) : 0;
+            $pegawai->total_tugas_diterima = $pegawai->tugasDiterima->count();
+            $pegawai->total_tugas_selesai = $pegawai->tugasDiterima->where('status', 'Selesai')->count();
+        });
+        
+        $totals = [
+            'total_hadir' => $pegawais->sum('total_hadir'),
+            'total_sakit_izin' => $pegawais->sum('total_sakit_izin'),
+            'total_telat' => $pegawais->sum('jumlah_telat'),
+            'rata_rata_keterlambatan' => $pegawais->avg('persentase_keterlambatan'),
+            'total_tugas_diterima' => $pegawais->sum('total_tugas_diterima'),
+            'total_tugas_selesai' => $pegawais->sum('total_tugas_selesai'),
+        ];
+        
         $chartData = [
             'labels' => $pegawais->pluck('nama'),
-            'kehadiran' => $pegawais->map(fn($p) => $p->kehadirans->where('status', 'Hadir')->count()),
-            'tugasSelesai' => $pegawais->map(fn($p) => $p->tugasDiterima->where('status', 'Selesai')->count()),
-            'pieTugas' => ['selesai' => $totalTugasSelesai, 'belum_selesai' => $totalTugasBelumSelesai]
+            'kehadiran' => $pegawais->pluck('total_hadir'),
+            'pieTugas' => ['selesai' => $totals['total_tugas_selesai'], 'belum_selesai' => $totals['total_tugas_diterima'] - $totals['total_tugas_selesai']],
+            'pieKeterlambatan' => ['tepat_waktu' => $totals['total_hadir'] - $totals['total_telat'], 'telat' => $totals['total_telat']],
+            'rataRataWaktuKerja' => $pegawais->map(function ($pegawai) {
+                $avgMasuk = $pegawai->kehadirans->whereNotNull('jam_masuk')->avg(fn($k) => Carbon::parse($k->jam_masuk)->hour + Carbon::parse($k->jam_masuk)->minute / 60);
+                $avgPulang = $pegawai->kehadirans->whereNotNull('jam_pulang')->avg(fn($k) => Carbon::parse($k->jam_pulang)->hour + Carbon::parse($k->jam_pulang)->minute / 60);
+                return [$avgMasuk, $avgPulang];
+            })
         ];
 
         $filter = [
@@ -112,6 +139,6 @@ class LaporanPerformaController extends Controller
             'title' => $filterTitle,
         ];
         
-        return [$pegawais, $chartData, $filter];
+        return [$pegawais, $chartData, $filter, $totals, $kehadiranDetails];
     }
 }

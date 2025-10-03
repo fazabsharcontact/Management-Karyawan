@@ -1,6 +1,5 @@
 @csrf
 <div class="space-y-4">
-    {{-- Input Username dan Nama Pegawai --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
@@ -13,7 +12,6 @@
         </div>
     </div>
 
-    {{-- Input Password --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
@@ -28,7 +26,6 @@
         </div>
     </div>
 
-    {{-- Input Email dan No HP --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -40,20 +37,19 @@
         </div>
     </div>
 
-    {{-- Input Alamat --}}
     <div>
         <label for="alamat" class="block text-sm font-medium text-gray-700">Alamat</label>
         <textarea name="alamat" id="alamat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>{{ old('alamat', $pegawai->alamat ?? '') }}</textarea>
     </div>
 
-    {{-- Input Jabatan dan Tim/Divisi --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="jabatan" class="block text-sm font-medium text-gray-700">Jabatan</label>
             <select name="jabatan" id="jabatan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                 <option value="">-- Pilih Jabatan --</option>
                 @foreach($jabatan as $j)
-                    <option value="{{ $j->id }}"
+                    {{-- PERBAIKAN: Tambahkan atribut data-gaji-awal --}}
+                    <option value="{{ $j->id }}" data-gaji-awal="{{ $j->gaji_awal }}"
                         {{ old('jabatan', $pegawai->jabatan_id ?? '') == $j->id ? 'selected' : '' }}>
                         {{ $j->nama_jabatan }}
                     </option>
@@ -78,7 +74,6 @@
         </div>
     </div>
 
-    {{-- Input Tanggal Masuk dan Gaji Pokok --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label for="tanggal_masuk" class="block text-sm font-medium text-gray-700">Tanggal Masuk</label>
@@ -92,3 +87,20 @@
         </div>
     </div>
 </div>
+
+{{-- SCRIPT BARU UNTUK AUTO-FILL GAJI POKOK --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jabatanSelect = document.getElementById('jabatan');
+        const gajiInput = document.getElementById('gaji');
+
+        jabatanSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const gajiAwal = selectedOption.getAttribute('data-gaji-awal');
+            if (gajiAwal) {
+                gajiInput.value = gajiAwal;
+            }
+        });
+    });
+</script>
+

@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                {{-- --- FILTER BARU UNTUK HIRARKI --- --}}
+                {{-- Filter Hirarki --}}
                 <div>
                     <label for="divisi_id" class="block font-medium">Filter per Divisi</label>
                     <select name="divisi_id" id="divisi_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full">
@@ -60,7 +60,6 @@
                         @endforeach
                     </select>
                 </div>
-                 {{-- ------------------------------------ --}}
 
                 <div class="flex gap-2">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">Terapkan</button>
@@ -77,14 +76,27 @@
             <p class="text-sm text-gray-500">Periode: {{ $filter['tanggal_mulai'] }} - {{ $filter['tanggal_selesai'] }}</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+        {{-- --- PERUBAHAN UTAMA: Tata letak grid diubah menjadi 2 kolom --- --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold mb-4 text-gray-700">Total Kehadiran</h3>
                 <div class="h-96"><canvas id="kehadiranChart"></canvas></div>
             </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold mb-4 text-gray-700">Rata-rata Jam Kerja Pegawai</h3>
+                <div class="h-96">
+                    <canvas id="jamKerjaChart"></canvas>
+                </div>
+            </div>
+
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold mb-4 text-gray-700">Ringkasan Tugas</h3>
-                 <div class="h-96 flex items-center justify-center"><canvas id="pieTugasChart"></canvas></div>
+                 <div class="h-80 flex items-center justify-center"><canvas id="pieTugasChart"></canvas></div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold mb-4 text-gray-700">Ringkasan Keterlambatan</h3>
+                <div class="h-80 flex items-center justify-center"><canvas id="keterlambatanChart"></canvas></div>
             </div>
         </div>
 
@@ -95,8 +107,10 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="border-b px-4 py-2 text-left">Nama Pegawai</th>
-                            <th class="border-b px-4 py-2 text-center">Total Hadir</th>
-                            <th class="border-b px-4 py-2 text-center">Total Sakit/Izin</th>
+                            <th class="border-b px-4 py-2 text-center">Hadir</th>
+                            <th class="border-b px-4 py-2 text-center">Sakit/Izin</th>
+                            <th class="border-b px-4 py-2 text-center">Jml Telat</th>
+                            <th class="border-b px-4 py-2 text-center">Tingkat Keterlambatan</th>
                             <th class="border-b px-4 py-2 text-center">Tugas Diterima</th>
                             <th class="border-b px-4 py-2 text-center">Tugas Selesai</th>
                         </tr>
@@ -105,106 +119,138 @@
                         @forelse($pegawais as $pegawai)
                         <tr class="hover:bg-gray-50">
                             <td class="border-b px-4 py-2 font-medium">{{ $pegawai->nama }}</td>
-                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->kehadirans->where('status', 'Hadir')->count() }}</td>
-                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->kehadirans->whereIn('status', ['Sakit', 'Izin'])->count() }}</td>
-                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->tugasDiterima->count() }}</td>
-                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->tugasDiterima->where('status', 'Selesai')->count() }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->total_hadir }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->total_sakit_izin }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->jumlah_telat }}</td>
+                            <td class="border-b px-4 py-2 text-center font-medium">{{ $pegawai->persentase_keterlambatan }}%</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->total_tugas_diterima }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $pegawai->total_tugas_selesai }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">Tidak ada data untuk filter yang dipilih.</td>
+                            <td colspan="7" class="text-center py-4 text-gray-500">Tidak ada data untuk filter yang dipilih.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                    @if($pegawais->isNotEmpty())
+                    <tfoot class="bg-gray-50 font-bold">
+                        <tr>
+                            <td class="border-b px-4 py-2 text-left">TOTAL / RATA-RATA</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $totals['total_hadir'] }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $totals['total_sakit_izin'] }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $totals['total_telat'] }}</td>
+                            <td class="border-b px-4 py-2 text-center text-blue-600">{{ round($totals['rata_rata_keterlambatan'], 1) }}%</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $totals['total_tugas_diterima'] }}</td>
+                            <td class="border-b px-4 py-2 text-center">{{ $totals['total_tugas_selesai'] }}</td>
+                        </tr>
+                    </tfoot>
+                    @endif
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+             <h3 class="text-lg font-semibold mb-4">Detail Data Kehadiran & Keterlambatan</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200 rounded">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="border-b px-4 py-2 text-left">Tanggal</th>
+                            <th class="border-b px-4 py-2 text-left">Nama Pegawai</th>
+                            <th class="border-b px-4 py-2 text-center">Jam Masuk</th>
+                            <th class="border-b px-4 py-2 text-center">Jam Pulang</th>
+                            <th class="border-b px-4 py-2 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($kehadiranDetails as $kehadiran)
+                        <tr class="hover:bg-gray-50">
+                            <td class="border-b px-4 py-2 text-sm">{{ \Carbon\Carbon::parse($kehadiran->tanggal)->format('d M Y') }}</td>
+                            <td class="border-b px-4 py-2">{{ $kehadiran->pegawai->nama ?? 'N/A' }}</td>
+                            <td class="border-b px-4 py-2 text-center text-sm">
+                                @if(is_null($kehadiran->jam_masuk) || $kehadiran->jam_masuk > '09:10:00')
+                                    <span class="font-bold text-red-600">{{ $kehadiran->jam_masuk ?? 'ABSEN' }}</span>
+                                @else
+                                    {{ $kehadiran->jam_masuk }}
+                                @endif
+                            </td>
+                            <td class="border-b px-4 py-2 text-center text-sm">{{ $kehadiran->jam_pulang ?? '-' }}</td>
+                            <td class="border-b px-4 py-2 text-center text-sm">
+                                @if($kehadiran->status == 'Hadir') <span class="text-green-600">{{ $kehadiran->status }}</span>
+                                @else <span class="text-yellow-600">{{ $kehadiran->status }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-gray-500">Tidak ada data kehadiran untuk filter yang dipilih.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+                <div class="mt-4">
+                    {{ $kehadiranDetails->appends(request()->query())->links() }}
+                </div>
             </div>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.getElementById('periode').addEventListener('change', function () {
-            document.getElementById('custom-date-range').classList.toggle('hidden', this.value !== 'custom');
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('periode').addEventListener('change', function () {
+                document.getElementById('custom-date-range').classList.toggle('hidden', this.value !== 'custom');
+            });
+            const divisiSelect = document.getElementById('divisi_id');
+            const timSelect = document.getElementById('tim_id');
+            const pegawaiSelect = document.getElementById('pegawai_id');
+            divisiSelect.addEventListener('change', () => { if (divisiSelect.value) { timSelect.value = ''; pegawaiSelect.value = ''; } });
+            timSelect.addEventListener('change', () => { if (timSelect.value) { divisiSelect.value = ''; pegawaiSelect.value = ''; } });
+            pegawaiSelect.addEventListener('change', () => { if (pegawaiSelect.value) { divisiSelect.value = ''; timSelect.value = ''; } });
 
-        // Logika untuk memastikan hanya satu filter hirarki yang aktif
-        const divisiSelect = document.getElementById('divisi_id');
-        const timSelect = document.getElementById('tim_id');
-        const pegawaiSelect = document.getElementById('pegawai_id');
+            const chartData = @json($chartData);
+            
+            const kehadiranCtx = document.getElementById('kehadiranChart').getContext('2d');
+            const gradientKehadiran = kehadiranCtx.createLinearGradient(0, 0, 0, 400);
+            gradientKehadiran.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+            gradientKehadiran.addColorStop(1, 'rgba(59, 130, 246, 0.2)');
+            new Chart(kehadiranCtx, {
+                type: 'bar', data: { labels: chartData.labels, datasets: [{
+                label: 'Total Hari Hadir', data: chartData.kehadiran, backgroundColor: gradientKehadiran, 
+                borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 8 }]
+                }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true } }, plugins: { tooltip: { callbacks: { label: (context) => `${context.raw} hari hadir` } } } }
+            });
 
-        divisiSelect.addEventListener('change', () => {
-            if (divisiSelect.value) {
-                timSelect.value = '';
-                pegawaiSelect.value = '';
+            const jamKerjaCtx = document.getElementById('jamKerjaChart').getContext('2d');
+            function toHHMM(decimalHour) {
+                if (decimalHour === null || isNaN(decimalHour)) return 'N/A';
+                const hours = Math.floor(decimalHour);
+                const minutes = Math.round((decimalHour - hours) * 60);
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
             }
-        });
-        timSelect.addEventListener('change', () => {
-             if (timSelect.value) {
-                divisiSelect.value = '';
-                pegawaiSelect.value = '';
-            }
-        });
-        pegawaiSelect.addEventListener('change', () => {
-             if (pegawaiSelect.value) {
-                divisiSelect.value = '';
-                timSelect.value = '';
-            }
-        });
+            new Chart(jamKerjaCtx, {
+                type: 'bar', data: { labels: chartData.labels, datasets: [{
+                label: 'Rata-rata Jam Kerja', data: chartData.rataRataWaktuKerja, backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1, borderRadius: 5, borderSkipped: false }]
+                }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { min: 7, max: 19, ticks: { callback: (value) => value + ':00' } } }, 
+                plugins: { tooltip: { callbacks: { label: function(context) { const jamMasuk = toHHMM(context.raw[0]); const jamPulang = toHHMM(context.raw[1]); return ` Rata-rata: ${jamMasuk} - ${jamPulang}`; } } } } }
+            });
 
-        const chartData = @json($chartData);
-        // (Kode JavaScript untuk Chart tetap sama...)
-        const kehadiranCtx = document.getElementById('kehadiranChart').getContext('2d');
-        const gradientKehadiran = kehadiranCtx.createLinearGradient(0, 0, 0, 400);
-        gradientKehadiran.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
-        gradientKehadiran.addColorStop(1, 'rgba(59, 130, 246, 0.2)');
+            const pieTugasCtx = document.getElementById('pieTugasChart').getContext('2d');
+            new Chart(pieTugasCtx, {
+                type: 'doughnut', data: { labels: ['Selesai', 'Belum Selesai'], datasets: [{
+                data: [chartData.pieTugas.selesai, chartData.pieTugas.belum_selesai], backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                borderColor: ['#fff'], borderWidth: 2 }]
+                }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw} tugas` } } } }
+            });
 
-        new Chart(kehadiranCtx, {
-            type: 'bar',
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    label: 'Total Hari Hadir',
-                    data: chartData.kehadiran,
-                    backgroundColor: gradientKehadiran,
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1,
-                    borderRadius: 8,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { x: { beginAtZero: true } },
-                plugins: {
-                    tooltip: {
-                        callbacks: { label: (context) => `${context.raw} hari hadir` }
-                    }
-                }
-            }
-        });
-
-        const pieTugasCtx = document.getElementById('pieTugasChart').getContext('2d');
-        new Chart(pieTugasCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Tugas Selesai', 'Belum Selesai'],
-                datasets: [{
-                    data: [chartData.pieTugas.selesai, chartData.pieTugas.belum_selesai],
-                    backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)'],
-                    borderColor: ['#fff'],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                 plugins: {
-                    tooltip: {
-                        callbacks: { label: (context) => `${context.label}: ${context.raw} tugas` }
-                    }
-                }
-            }
+            const keterlambatanCtx = document.getElementById('keterlambatanChart').getContext('2d');
+            new Chart(keterlambatanCtx, {
+                type: 'doughnut', data: { labels: ['Tepat Waktu', 'Terlambat'], datasets: [{
+                data: [chartData.pieKeterlambatan.tepat_waktu, chartData.pieKeterlambatan.telat], backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)'],
+                borderColor: ['#fff'], borderWidth: 2 }]
+                }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw} kehadiran` } } } }
+            });
         });
     </script>
 </x-app-layout>
