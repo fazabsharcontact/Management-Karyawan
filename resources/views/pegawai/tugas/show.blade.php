@@ -34,19 +34,19 @@
                 </div>
 
                 {{-- Status Pengumpulan --}}
-                @if ($tugas->pengumpulan)
+                @if ($tugas->pengumpulanTerbaru)
                     <div class="mb-4">
                         <strong>Status Pengumpulan:</strong>
                         <span
                             class="px-2 py-1 rounded text-sm
-                            @if ($tugas->pengumpulan->status == 'pending') bg-gray-100 text-gray-700
-                            @elseif($tugas->pengumpulan->status == 'revisi') bg-red-100 text-red-700
-                            @elseif($tugas->pengumpulan->status == 'diterima') bg-green-100 text-green-700 @endif">
-                            {{ ucfirst($tugas->pengumpulan->status) }}
+            @if ($tugas->pengumpulanTerbaru->status == 'pending') bg-gray-100 text-gray-700
+            @elseif($tugas->pengumpulanTerbaru->status == 'revisi') bg-red-100 text-red-700
+            @elseif($tugas->pengumpulanTerbaru->status == 'diterima') bg-green-100 text-green-700 @endif">
+                            {{ ucfirst($tugas->pengumpulanTerbaru->status) }}
                         </span>
 
-                        @if ($tugas->pengumpulan->catatan)
-                            <p class="mt-1 text-sm text-gray-600">Catatan: {{ $tugas->pengumpulan->catatan }}</p>
+                        @if ($tugas->pengumpulanTerbaru->catatan)
+                            <p class="mt-1 text-sm text-gray-600">Catatan: {{ $tugas->pengumpulanTerbaru->catatan }}</p>
                         @endif
                     </div>
                 @endif
@@ -62,8 +62,8 @@
                     </form>
                 @endif
 
-                {{-- Jika status Dikerjakan atau Revisi → form upload pengumpulan --}}
-                @if ($tugas->status == 'Dikerjakan' || ($tugas->pengumpulan && $tugas->pengumpulan->status == 'revisi'))
+                {{-- Jika status Dikerjakan atau Revisi → form upload pengumpulan (tapi hilang kalau sudah diterima) --}}
+                @if ($tugas->status == 'Dikerjakan' && (!$tugas->pengumpulanTerbaru || $tugas->pengumpulanTerbaru->status != 'diterima'))
                     <form action="{{ route('pegawai.tugas.pengumpulan.store', $tugas->id) }}" method="POST"
                         enctype="multipart/form-data" class="mt-6 space-y-4">
                         @csrf
@@ -86,12 +86,13 @@
                     </form>
                 @endif
 
+
                 {{-- Jika ada pengumpulan, tampilkan detail file --}}
-                @if ($tugas->pengumpulan)
+                @if ($tugas->pengumpulanTerbaru)
                     <div class="mt-4">
                         <p>File Terakhir:
-                            <a href="{{ asset('storage/' . $tugas->pengumpulan->file) }}" target="_blank">
-                                {{ basename($tugas->pengumpulan->file) }}
+                            <a href="{{ asset('storage/' . $tugas->pengumpulanTerbaru->file) }}" target="_blank">
+                                {{ basename($tugas->pengumpulanTerbaru->file) }}
                             </a>
                         </p>
                     </div>

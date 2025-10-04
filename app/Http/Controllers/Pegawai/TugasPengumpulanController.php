@@ -19,14 +19,24 @@ class TugasPengumpulanController extends Controller
 
         $pegawai = Auth::user()->pegawai;
 
-        // Upload file
-        $filePath = $request->file('file')->store('tugas_pengumpulan', 'public');
+        // Ambil objek file
+        $file = $request->file('file');
+
+        // **PERUBAHAN 1: Ambil nama file asli**
+        $originalFilename = $file->getClientOriginalName();
+
+        // Tentukan folder penyimpanan
+        $storagePath = 'tugas_pengumpulan';
+
+        // **PERUBAHAN 2: Upload file menggunakan storeAs untuk mempertahankan nama asli**
+        // CATATAN: Ini akan MENIMPA file yang sudah ada dengan nama yang sama di folder ini.
+        $filePath = $file->storeAs($storagePath, $originalFilename, 'public');
 
         // Simpan data pengumpulan
         TugasPengumpulan::create([
             'tugas_id' => $tugasId,
             'pegawai_id' => $pegawai->id,
-            'file' => $filePath,
+            'file' => $storagePath . '/' . $originalFilename, // Pastikan format path sesuai
             'catatan' => $request->catatan,
             'status' => 'pending',
         ]);

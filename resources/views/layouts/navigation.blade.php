@@ -58,6 +58,12 @@
                         <x-nav-link :href="route('admin.cuti.index')" :active="request()->routeIs('admin.cuti.*')">
                             {{ __('Manajemen Cuti') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.tugas.index')" :active="request()->routeIs('admin.tugas.*')">
+                            {{ __('Tugas') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.kehadiran.index')" :active="request()->routeIs('admin.kehadiran.*')">
+                            {{ __('Kehadiran Pegawai') }}
+                        </x-nav-link>
 
                         <x-nav-link :href="route('admin.laporan.performa')" :active="request()->routeIs('admin.laporan.performa')">
                             {{ __('Laporan Performa') }}

@@ -20,15 +20,26 @@ class AdminTugasPengumpulanController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        // Tambahkan catatan sebagai opsional/nullable
         $request->validate([
             'status' => 'required|in:diterima,revisi',
+            'catatan' => 'nullable|string|max:500', // Tambahkan validasi catatan
         ]);
 
         $pengumpulan = TugasPengumpulan::findOrFail($id);
         $pengumpulan->status = $request->status;
+
+        // Tambahkan logika untuk menyimpan catatan hanya jika statusnya 'revisi'
+        if ($request->status === 'revisi') {
+            $pengumpulan->catatan = $request->catatan;
+        } else {
+            // Jika diterima, mungkin ingin mengosongkan catatan revisi sebelumnya
+            $pengumpulan->catatan = null;
+        }
+
         $pengumpulan->save();
 
-        // update status tugas juga
+        // ... (Logika update status tugas Anda yang sudah benar)
         $tugas = $pengumpulan->tugas;
         if ($request->status === 'diterima') {
             $tugas->status = 'Selesai';

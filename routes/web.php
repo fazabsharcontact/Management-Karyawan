@@ -25,6 +25,8 @@ use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\PengumumanController;
 use App\Http\Controllers\Admin\LaporanPerformaController;
 use App\Http\Controllers\Admin\AdminTugasPengumpulanController;
+use App\Http\Controllers\Admin\AdminTugasController;
+use App\Http\Controllers\Admin\AdminKehadiranController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -70,6 +72,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('laporan-performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
     Route::get('tugas/pengumpulan', [App\Http\Controllers\Admin\AdminTugasPengumpulanController::class, 'index'])->name('admin.tugas_pengumpulan.index');
     Route::post('tugas/pengumpulan/{id}/status', [App\Http\Controllers\Admin\AdminTugasPengumpulanController::class, 'updateStatus'])->name('admin.tugas_pengumpulan.update');
+    Route::get('/tugas', [App\Http\Controllers\Admin\AdminTugasController::class, 'index'])->name('admin.tugas.index');
+    Route::post('/tugas', [App\Http\Controllers\Admin\AdminTugasController::class, 'store'])->name('admin.tugas.store');
+    Route::get('kehadiran', [App\Http\Controllers\Admin\AdminKehadiranController::class, 'index'])->name('admin.kehadiran.index');
+    Route::get('kehadiran/{pegawai}', [App\Http\Controllers\Admin\AdminKehadiranController::class, 'show'])->name('admin.kehadiran.show');
+    Route::get('kehadiran/bukti/{id}', [App\Http\Controllers\Admin\AdminKehadiranController::class, 'downloadBukti'])->name('admin.kehadiran.downloadBukti');
 });
 
 // PegawaiDashboard
@@ -88,4 +95,6 @@ Route::prefix('pegawai')->middleware(['auth', 'role:pegawai'])->group(function (
     Route::post('/tugas/{id}/pengumpulan', [App\Http\Controllers\Pegawai\TugasPengumpulanController::class, 'store'])->name('pegawai.tugas.pengumpulan.store');
     Route::get('meeting', [App\Http\Controllers\Pegawai\PegawaiMeetingController::class, 'index'])->name('pegawai.meeting.index');
     Route::get(uri: 'meeting/{meeting}', action: [App\Http\Controllers\Pegawai\PegawaiMeetingController::class, 'show'])->name('pegawai.meeting.show');
+    Route::get('/pegawai/gaji/slip/{gaji}', [PegawaiGajiController::class, 'unduhSlipGaji'])
+        ->name('pegawai.gaji.unduh');
 });

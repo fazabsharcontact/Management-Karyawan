@@ -1,47 +1,53 @@
 <?php
 
-// app/Http/Controllers/Pegawai/PegawaiGajiController.php
 namespace App\Http\Controllers\Pegawai;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request; // Tambahkan Request
 use Illuminate\Support\Facades\Auth;
 use App\Models\Gaji;
-use App\Models\Pegawai; // <-- TAMBAHKAN INI
+use App\Models\Pegawai;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf; // Pastikan ini di-import
 
 class PegawaiGajiController extends Controller
 {
-    public function index()
+    /**
+     * Menampilkan riwayat gaji pegawai yang sedang login.
+     */
+    public function index(Request $request) // Gunakan Request untuk mengambil input
     {
         // 1. Ambil User ID yang sedang login
         $userId = Auth::id();
 
         // 2. Cari Pegawai ID dari tabel 'pegawai' berdasarkan user_id
-        // Asumsi: Ada kolom 'user_id' di tabel 'pegawai'
         $pegawai = Pegawai::where('user_id', $userId)->first();
 
         // Cek jika data pegawai tidak ditemukan (Penting!)
         if (!$pegawai) {
-            // Beri respons jika user yang login tidak punya data pegawai yang terasosiasi
-            // Atau redirect ke halaman error
             return redirect()->back()->with('error', 'Data pegawai Anda tidak ditemukan.');
         }
 
-        // 3. Gunakan ID Pegawai yang benar dari hasil query
-        $pegawaiId = $pegawai->id; // <-- PENGGANTIAN UTAMA DI SINI
+        $pegawaiId = $pegawai->id;
 
-        $tahun = request('tahun', Carbon::now()->year);
-        $bulan = request('bulan', Carbon::now()->month);
+        // Ambil filter dari request, default bulan/tahun sekarang
+        $tahun = $request->get('tahun', Carbon::now()->year);
+        $bulan = $request->get('bulan', Carbon::now()->month);
 
-        $riwayat = Gaji::where('pegawai_id', $pegawaiId) // Sudah menggunakan $pegawaiId yang benar
-            ->where('tahun', $tahun)
-            ->where('bulan', $bulan)
+        // Ambil riwayat gaji
+        $riwayat = Gaji::where('pegawai_id', $pegawaiId)
+            // Tambahkan filter bulan dan tahun untuk riwayat jika ingin ditampilkan per bulan/tahun
+            // ->where('tahun', $tahun) // Jika ingin memfilter riwayat
+            // ->where('bulan', $bulan) // Jika ingin memfilter riwayat
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
             ->get();
 
+        // Ambil detail gaji terbaru untuk ditampilkan di atas (jika ada)
         $detail = Gaji::where('pegawai_id', $pegawaiId)
-            ->orderByDesc('updated_at')
+            ->where('tahun', $tahun)
+            ->where('bulan', $bulan)
+            ->with(['tunjanganDetails.masterTunjangan', 'potonganDetails.masterPotongan', 'pegawai.jabatan'])
             ->first();
 
         $bulanNama = [
@@ -60,5 +66,42 @@ class PegawaiGajiController extends Controller
         ];
 
         return view('pegawai.gaji.index', compact('riwayat', 'detail', 'tahun', 'bulan', 'bulanNama'));
+    }
+
+    /**
+     * Mengunduh slip gaji dalam format PDF.
+     * @param \App\Models\Gaji $gaji
+     */
+    public function unduhSlipGaji(Gaji $gaji)
+    {
+        // 1. Cek User ID yang sedang login dan ambil data pegawai
+        $userId = Auth::id();
+        $pegawai = Pegawai::where('user_id', $userId)->first();
+
+        if (!$pegawai) {
+            return redirect()->back()->with('error', 'Data pegawai Anda tidak ditemukan.');
+        }
+
+        // 2. Lakukan Authorization: Pastikan ID Gaji yang diminta adalah milik pegawai yang sedang login
+        if ($gaji->pegawai_id !== $pegawai->id) {
+            // Jika bukan, tolak akses!
+            abort(403, 'Akses ditolak. Slip gaji ini bukan milik Anda.');
+        }
+
+        // 3. Load relasi yang dibutuhkan
+        $gaji->load(['pegawai.jabatan', 'tunjanganDetails.masterTunjangan', 'potonganDetails.masterPotongan']);
+
+        // 4. Proses generate PDF
+        $data = ['gaji' => $gaji];
+        // Asumsi: View untuk slip gaji berada di 'pegawai.gaji.slip-gaji-pdf'
+        $pdf = Pdf::loadView('pegawai.gaji.slip-gaji-pdf', $data);
+
+        // 5. Nama file
+        $bulanNama = [1 => "Januari", 2 => "Februari", /* ... */ 12 => "Desember"];
+        $bulanStr = $bulanNama[$gaji->bulan] ?? 'Bulan';
+
+        $namaFile = 'slip-gaji-' . $gaji->pegawai->nama . '-' . $bulanStr . '-' . $gaji->tahun . '.pdf';
+
+        return $pdf->download($namaFile);
     }
 }
