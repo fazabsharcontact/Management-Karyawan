@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="p-6">
-        <form action="{{ route('admin.gaji.store') }}" method="POST" class="space-y-6">
+        <form id="form-gaji" action="{{ route('admin.gaji.store') }}" method="POST" class="space-y-6">
             @csrf
             {{-- Bagian Informasi Utama --}}
             <div class="bg-white p-6 rounded-lg shadow">
@@ -14,31 +14,28 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
-                        <select name="pegawai_id" id="pegawai_id" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
+                        <select name="pegawai_id" id="pegawai_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                             <option value="">-- Pilih Pegawai --</option>
                             @foreach($pegawais as $p)
                             <option value="{{ $p->id }}" data-gaji-pokok="{{ $p->gaji_pokok }}">{{ $p->nama }}</option>
                             @endforeach
                         </select>
                     </div>
-
                     <div>
                         <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
-                        <select name="bulan" id="bulan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
+                        <select name="bulan" id="bulan" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                             @for($i = 1; $i <= 12; $i++)
                             <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
                             @endfor
                         </select>
                     </div>
-
                     <div>
                         <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ date('Y') }}" required>
+                        <input type="number" name="tahun" id="tahun" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" value="{{ date('Y') }}" required>
                     </div>
-
                     <div>
                         <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
-                        <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" placeholder="Gaji Pokok" required>
+                        <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai..." required>
                     </div>
                 </div>
             </div>
@@ -48,8 +45,7 @@
                     <h3 class="text-lg font-semibold">Tunjangan</h3>
                     <button type="button" id="add-tunjangan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Tunjangan</button>
                 </div>
-                <div id="tunjangan-container" class="space-y-3">
-                    </div>
+                <div id="tunjangan-container" class="space-y-3"></div>
             </div>
 
             <div class="bg-white p-6 rounded-lg shadow">
@@ -57,8 +53,7 @@
                     <h3 class="text-lg font-semibold">Potongan</h3>
                     <button type="button" id="add-potongan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Potongan</button>
                 </div>
-                <div id="potongan-container" class="space-y-3">
-                    </div>
+                <div id="potongan-container" class="space-y-3"></div>
             </div>
             
             <div class="bg-gray-50 p-6 rounded-lg shadow">
@@ -78,12 +73,44 @@
         </form>
     </div>
 
+    {{-- Modal Konfirmasi --}}
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0">
+                        <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                    </div>
+                    <div class="ml-4 text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Konfirmasi Penyimpanan</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="modal-message">Apakah Anda yakin ingin menyimpan data gaji ini?</p>
+                            <div id="warning-pegawai" class="hidden mt-4">
+                                <p class="text-sm font-bold text-red-700">Peringatan: Data gaji untuk pegawai ini sudah ada pada periode yang dipilih.</p>
+                                <ul id="pegawai-list" class="mt-2 list-disc pl-5 text-sm text-red-600">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirm-yes" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        Ya, Simpan
+                    </button>
+                    <button type="button" id="confirm-no" class="mt-3 inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const masterTunjangans = @json($masterTunjangans);
             const masterPotongans = @json($masterPotongans);
-            const form = document.querySelector('form');
-
+            const form = document.getElementById('form-gaji');
+            
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency', currency: 'IDR', minimumFractionDigits: 0
             });
@@ -101,7 +128,6 @@
                 document.getElementById('summary-gaji-bersih').textContent = formatter.format(gajiBersih);
             }
 
-            // PERBAIKAN: Event listener untuk Gaji Pokok
             document.getElementById('gaji_pokok').addEventListener('input', calculateTotals);
 
             document.getElementById('pegawai_id').addEventListener('change', function() {
@@ -140,26 +166,23 @@
                 let optionsHtml = masterData.map(item => `<option value="${item.id}" data-default="${item.jumlah_default || ''}">${item[masterName]}</option>`).join('');
                 newRow.innerHTML = `
                     <div>
-                        <select name="${namePrefix}[${index}][${masterIdName}]" class="${selectClass} border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" required>
+                        <select name="${namePrefix}[${index}][${masterIdName}]" class="${selectClass} border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                             <option value="">-- Pilih ${isTunjangan ? 'Tunjangan' : 'Potongan'} --</option>
                             ${optionsHtml}
                         </select>
                     </div>
                     <div>
-                        <input type="number" name="${namePrefix}[${index}][jumlah]" class="jumlah-input border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Jumlah (Rp)" required>
+                        <input type="number" name="${namePrefix}[${index}][jumlah]" class="jumlah-input border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Jumlah (Rp)" required>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="text" name="${namePrefix}[${index}][keterangan]" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Keterangan">
+                        <input type="text" name="${namePrefix}[${index}][keterangan]" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Keterangan">
                         <button type="button" class="remove-row bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">&times;</button>
                     </div>
                 `;
                 container.appendChild(newRow);
                 
                 newRow.querySelector(`.${selectClass}`).addEventListener('change', handleDropdownChange);
-                
-                // PERBAIKAN: Menambahkan event listener 'input' langsung ke field jumlah yang baru dibuat
                 newRow.querySelector('.jumlah-input').addEventListener('input', calculateTotals);
-                
                 newRow.querySelector('.remove-row').addEventListener('click', function() {
                     newRow.remove(); 
                     calculateTotals();
@@ -170,6 +193,62 @@
             
             document.getElementById('add-tunjangan').addEventListener('click', () => addNewRow('tunjangan'));
             document.getElementById('add-potongan').addEventListener('click', () => addNewRow('potongan'));
+
+            // Logika untuk popup konfirmasi
+            const modal = document.getElementById('confirmation-modal');
+            const confirmYes = document.getElementById('confirm-yes');
+            const confirmNo = document.getElementById('confirm-no');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const warningPegawai = document.getElementById('warning-pegawai');
+            const pegawaiList = document.getElementById('pegawai-list');
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const pegawaiId = formData.get('pegawai_id');
+
+                if (!pegawaiId) {
+                    alert('Silakan pilih pegawai terlebih dahulu.');
+                    return;
+                }
+                
+                modalTitle.textContent = 'Konfirmasi Penyimpanan';
+                modalMessage.textContent = 'Apakah Anda yakin ingin menyimpan data gaji ini?';
+                warningPegawai.classList.add('hidden');
+                pegawaiList.innerHTML = '';
+                modal.classList.remove('hidden');
+                
+                try {
+                    const response = await fetch("{{ route('admin.gaji.cek') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            pegawai_id: pegawaiId,
+                            bulan: formData.get('bulan'),
+                            tahun: formData.get('tahun')
+                        })
+                    });
+                    
+                    const result = await response.json();
+
+                    if (result.exists && result.pegawai) {
+                        modalTitle.textContent = 'Peringatan: Data Gaji Ganda';
+                        modalMessage.textContent = 'Pegawai berikut sudah memiliki data gaji pada periode ini. Apakah Anda yakin ingin membuat data gaji baru?';
+                        warningPegawai.classList.remove('hidden');
+                        pegawaiList.innerHTML = `<li>${result.pegawai.nama} (${result.pegawai.jabatan?.nama_jabatan || ''})</li>`;
+                    }
+                } catch (error) {
+                    console.error('Gagal melakukan pengecekan:', error);
+                }
+            });
+
+            confirmYes.addEventListener('click', () => form.submit());
+            confirmNo.addEventListener('click', () => modal.classList.add('hidden'));
 
             calculateTotals();
         });

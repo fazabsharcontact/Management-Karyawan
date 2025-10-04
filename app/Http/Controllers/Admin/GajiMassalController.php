@@ -26,18 +26,10 @@ class GajiMassalController extends Controller
 
         if ($request->has('filter')) {
             $query = Pegawai::query()->with('jabatan');
-
-            // --- PERBAIKAN: Tambahkan filter pencarian nama ---
-            $query->when($request->filled('search'), function ($q) use ($request) {
-                $q->where('nama', 'like', '%' . $request->search . '%');
-            });
-            
-            $query->when($request->filled('divisi_id'), function ($q) use ($request) {
-                $q->whereHas('tim.divisi', fn ($sq) => $sq->where('id', $request->divisi_id));
-            });
-            $query->when($request->filled('tim_id'), fn ($q) => $q->where('tim_id', $request->tim_id));
-            $query->when($request->filled('jabatan_id'), fn ($q) => $q->where('jabatan_id', $request->jabatan_id));
-
+            $query->when($request->filled('search'), fn($q) => $q->where('nama', 'like', '%' . $request->search . '%'));
+            $query->when($request->filled('divisi_id'), fn($q) => $q->whereHas('tim.divisi', fn($sq) => $sq->where('id', $request->divisi_id)));
+            $query->when($request->filled('tim_id'), fn($q) => $q->where('tim_id', $request->tim_id));
+            $query->when($request->filled('jabatan_id'), fn($q) => $q->where('jabatan_id', $request->jabatan_id));
             $pegawais = $query->orderBy('nama')->get();
         }
         
@@ -47,10 +39,7 @@ class GajiMassalController extends Controller
         $pegawaiBelumGajian = Pegawai::where('tanggal_masuk', '<=', Carbon::now())
             ->whereDoesntHave('gajis', function ($query) use ($bulanIni, $tahunIni) {
                 $query->where('bulan', $bulanIni)->where('tahun', $tahunIni);
-            })
-            ->with(['jabatan', 'tim.divisi'])
-            ->orderBy('nama')
-            ->get();
+            })->with(['jabatan', 'tim.divisi'])->orderBy('nama')->get();
         
         $divisis = Divisi::orderBy('nama_divisi')->get();
         $tims = Tim::orderBy('nama_tim')->get();
@@ -59,7 +48,6 @@ class GajiMassalController extends Controller
         return view('admin.gaji.gaji-massal-1', compact('divisis', 'tims', 'jabatans', 'pegawais', 'inputs', 'pegawaiBelumGajian'));
     }
 
-    // ... (method langkahDua() dan simpan() tidak berubah)
     public function langkahDua(Request $request)
     {
         $request->validate(['pegawai_ids' => 'required|array|min:1'], ['pegawai_ids.required' => 'Anda harus memilih setidaknya satu pegawai.']);
@@ -107,13 +95,44 @@ class GajiMassalController extends Controller
                     'total_potongan' => $totalPotonganUmum,
                     'gaji_bersih' => $gajiBersih,
                 ]);
-                foreach ($tunjangansUmum as $tunjangan) { $gaji->tunjanganDetails()->create($tunjangan); }
-                foreach ($potongansUmum as $potongan) { $gaji->potonganDetails()->create($potongan); }
+
+                foreach ($tunjangansUmum as $tunjangan) {
+                    $gaji->tunjanganDetails()->create($tunjangan);
+                }
+
+                foreach ($potongansUmum as $potongan) {
+                    $gaji->potonganDetails()->create($potongan);
+                }
             }
         });
 
         return redirect()->route('admin.gaji.index')
             ->with('success', 'Gaji untuk ' . count($validated['pegawai_gaji']) . ' pegawai berhasil ditambahkan.');
     }
-}
 
+    /**
+     * --- METHOD BARU UNTUK PENGECEKAN VIA AJAX ---
+     */
+    public function cekGajiSudahAda(Request $request)
+    {
+        $validated = $request->validate([
+            'pegawai_ids' => 'required|array',
+            'bulan' => 'required|integer',
+            'tahun' => 'required|integer',
+        ]);
+
+        // Cari pegawai yang dipilih DAN sudah memiliki data gaji di periode yang sama
+        $pegawaiSudahGajian = Pegawai::whereIn('id', $validated['pegawai_ids'])
+            ->whereHas('gajis', function ($query) use ($validated) {
+                $query->where('bulan', $validated['bulan'])
+                      ->where('tahun', $validated['tahun']);
+            })
+            ->with(['jabatan', 'tim.divisi']) // Eager load relasi untuk ditampilkan di popup
+            ->get();
+
+        // Kembalikan hasilnya dalam format JSON
+        return response()->json([
+            'data' => $pegawaiSudahGajian
+        ]);
+    }
+}

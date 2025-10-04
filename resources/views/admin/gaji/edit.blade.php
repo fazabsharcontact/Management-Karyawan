@@ -6,43 +6,45 @@
     </x-slot>
 
     <div class="p-6">
-        <form action="{{ route('admin.gaji.update', $gaji->id) }}" method="POST" class="space-y-6">
+        <form id="form-gaji-edit" action="{{ route('admin.gaji.update', $gaji->id) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
+            
             {{-- Bagian Informasi Utama --}}
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
-                        <select name="pegawai_id" id="pegawai_id" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
+                        {{-- PERBAIKAN: Tambahkan atribut 'disabled' --}}
+                        <select name="pegawai_id" id="pegawai_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full bg-gray-100" required disabled>
                             @foreach($pegawais as $p)
                             <option value="{{ $p->id }}" data-gaji-pokok="{{ $p->gaji_pokok }}" {{ $gaji->pegawai_id == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
                             @endforeach
                         </select>
+                        {{-- Kirim ID pegawai secara tersembunyi karena dropdown di-disable --}}
+                        <input type="hidden" name="pegawai_id" value="{{ $gaji->pegawai_id }}">
                     </div>
-
                     <div>
                         <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
-                        <select name="bulan" id="bulan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
+                        <select name="bulan" id="bulan" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                             @for($i = 1; $i <= 12; $i++)
-                            <option value="{{ $i }}" {{ $gaji->bulan == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
+                            <option value="{{ $i }}" {{ old('bulan', $gaji->bulan) == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
                             @endfor
                         </select>
                     </div>
-
                     <div>
                         <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ $gaji->tahun }}" required>
+                        <input type="number" name="tahun" id="tahun" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" value="{{ old('tahun', $gaji->tahun) }}" required>
                     </div>
-
                     <div>
                         <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
-                        <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ $gaji->gaji_pokok }}" required>
+                        <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" value="{{ old('gaji_pokok', $gaji->gaji_pokok) }}" required>
                     </div>
                 </div>
             </div>
 
+            {{-- Tunjangan Dinamis --}}
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Tunjangan</h3>
@@ -52,7 +54,7 @@
                     @foreach($gaji->tunjanganDetails as $index => $detail)
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 border rounded-md">
                         <div>
-                            <select name="tunjangans[{{ $index }}][master_tunjangan_id]" class="tunjangan-select border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" required>
+                            <select name="tunjangans[{{ $index }}][master_tunjangan_id]" class="tunjangan-select border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                                 <option value="">-- Pilih Tunjangan --</option>
                                 @foreach($masterTunjangans as $t)
                                 <option value="{{ $t->id }}" data-default="{{ $t->jumlah_default ?? '' }}" {{ $detail->master_tunjangan_id == $t->id ? 'selected' : '' }}>
@@ -62,10 +64,10 @@
                             </select>
                         </div>
                         <div>
-                            <input type="number" name="tunjangans[{{ $index }}][jumlah]" class="jumlah-input border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Jumlah (Rp)" value="{{ $detail->jumlah }}" required>
+                            <input type="number" name="tunjangans[{{ $index }}][jumlah]" class="jumlah-input border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Jumlah (Rp)" value="{{ $detail->jumlah }}" required>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="text" name="tunjangans[{{ $index }}][keterangan]" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Keterangan (Opsional)" value="{{ $detail->keterangan }}">
+                            <input type="text" name="tunjangans[{{ $index }}][keterangan]" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Keterangan (Opsional)" value="{{ $detail->keterangan }}">
                             <button type="button" class="remove-row bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">&times;</button>
                         </div>
                     </div>
@@ -73,6 +75,7 @@
                 </div>
             </div>
 
+            {{-- Potongan Dinamis --}}
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center border-b pb-2 mb-4">
                     <h3 class="text-lg font-semibold">Potongan</h3>
@@ -82,7 +85,7 @@
                      @foreach($gaji->potonganDetails as $index => $detail)
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 border rounded-md">
                         <div>
-                            <select name="potongans[{{ $index }}][master_potongan_id]" class="potongan-select border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" required>
+                            <select name="potongans[{{ $index }}][master_potongan_id]" class="potongan-select border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                                 <option value="">-- Pilih Potongan --</option>
                                 @foreach($masterPotongans as $p)
                                 <option value="{{ $p->id }}" data-default="{{ $p->jumlah_default ?? '' }}" {{ $detail->master_potongan_id == $p->id ? 'selected' : '' }}>
@@ -92,10 +95,10 @@
                             </select>
                         </div>
                         <div>
-                            <input type="number" name="potongans[{{ $index }}][jumlah]" class="jumlah-input border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Jumlah (Rp)" value="{{ $detail->jumlah }}" required>
+                            <input type="number" name="potongans[{{ $index }}][jumlah]" class="jumlah-input border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Jumlah (Rp)" value="{{ $detail->jumlah }}" required>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="text" name="potongans[{{ $index }}][keterangan]" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Keterangan (Opsional)" value="{{ $detail->keterangan }}">
+                            <input type="text" name="potongans[{{ $index }}][keterangan]" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Keterangan (Opsional)" value="{{ $detail->keterangan }}">
                             <button type="button" class="remove-row bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">&times;</button>
                         </div>
                     </div>
@@ -103,6 +106,7 @@
                 </div>
             </div>
             
+            {{-- Ringkasan Gaji --}}
             <div class="bg-gray-50 p-6 rounded-lg shadow">
                  <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
                  <div class="space-y-2 text-sm">
@@ -114,7 +118,7 @@
             </div>
 
             <div class="flex items-center gap-4 pt-4">
-                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow">Update</button>
+                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow">Update Data Gaji</button>
                 <a href="{{ route('admin.gaji.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
             </div>
         </form>
@@ -124,7 +128,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const masterTunjangans = @json($masterTunjangans);
             const masterPotongans = @json($masterPotongans);
-            const form = document.querySelector('form');
+            const form = document.getElementById('form-gaji-edit');
 
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency', currency: 'IDR', minimumFractionDigits: 0
@@ -143,18 +147,19 @@
                 document.getElementById('summary-gaji-bersih').textContent = formatter.format(gajiBersih);
             }
 
-            // PERBAIKAN: Tambahkan event listener ke semua input yang sudah ada saat halaman dimuat
-            document.querySelectorAll('#gaji_pokok, .jumlah-input').forEach(input => {
-                input.addEventListener('input', calculateTotals);
-            });
-
-            document.getElementById('pegawai_id').addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const gajiPokok = selectedOption.getAttribute('data-gaji-pokok');
-                document.getElementById('gaji_pokok').value = gajiPokok || '';
-                calculateTotals();
-            });
-
+            function setupEventListeners(element) {
+                element.querySelector('.jumlah-input')?.addEventListener('input', calculateTotals);
+                element.querySelector('.tunjangan-select')?.addEventListener('change', handleDropdownChange);
+                element.querySelector('.potongan-select')?.addEventListener('change', handleDropdownChange);
+                element.querySelector('.remove-row')?.addEventListener('click', function() {
+                    this.closest('.grid').remove();
+                    calculateTotals();
+                });
+            }
+            
+            document.querySelectorAll('#tunjangan-container > div, #potongan-container > div').forEach(setupEventListeners);
+            document.getElementById('gaji_pokok').addEventListener('input', calculateTotals);
+            
             let tunjanganIndex = {{ $gaji->tunjanganDetails->count() }};
             let potonganIndex = {{ $gaji->potonganDetails->count() }};
             
@@ -173,49 +178,23 @@
                 const container = document.getElementById(isTunjangan ? 'tunjangan-container' : 'potongan-container');
                 const masterData = isTunjangan ? masterTunjangans : masterPotongans;
                 const index = isTunjangan ? tunjanganIndex++ : potonganIndex++;
-                const namePrefix = isTunjangan ? 'tunjangans' : 'potongans';
+                const namePrefix = isTunjangan ? `tunjangans[${index}]` : `potongans[${index}]`;
                 const masterIdName = isTunjangan ? 'master_tunjangan_id' : 'master_potongan_id';
                 const masterName = isTunjangan ? 'nama_tunjangan' : 'nama_potongan';
-                const selectClass = isTunjangan ? 'tunjangan-select' : 'potongan-select';
                 const newRow = document.createElement('div');
                 newRow.classList.add('grid', 'grid-cols-1', 'md:grid-cols-3', 'gap-4', 'items-center', 'p-2', 'border', 'rounded-md');
                 let optionsHtml = masterData.map(item => `<option value="${item.id}" data-default="${item.jumlah_default || ''}">${item[masterName]}</option>`).join('');
                 newRow.innerHTML = `
-                    <div>
-                        <select name="${namePrefix}[${index}][${masterIdName}]" class="${selectClass} border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" required>
-                            <option value="">-- Pilih ${isTunjangan ? 'Tunjangan' : 'Potongan'} --</option>
-                            ${optionsHtml}
-                        </select>
-                    </div>
-                    <div>
-                        <input type="number" name="${namePrefix}[${index}][jumlah]" class="jumlah-input border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Jumlah (Rp)" required>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="text" name="${namePrefix}[${index}][keterangan]" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block w-full" placeholder="Keterangan">
-                        <button type="button" class="remove-row bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">&times;</button>
-                    </div>
+                    <div><select name="${namePrefix}[${masterIdName}]" class="${type}-select border-gray-300 rounded-md shadow-sm mt-1 w-full" required><option value="">-- Pilih ${isTunjangan ? 'Tunjangan' : 'Potongan'} --</option>${optionsHtml}</select></div>
+                    <div><input type="number" name="${namePrefix}[jumlah]" class="jumlah-input border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Jumlah (Rp)" required></div>
+                    <div class="flex items-center gap-2"><input type="text" name="${namePrefix}[keterangan]" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Keterangan"><button type="button" class="remove-row bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">&times;</button></div>
                 `;
                 container.appendChild(newRow);
-                
-                newRow.querySelector(`.${selectClass}`).addEventListener('change', handleDropdownChange);
-                newRow.querySelector('.jumlah-input').addEventListener('input', calculateTotals);
-                newRow.querySelector('.remove-row').addEventListener('click', function() {
-                    newRow.remove(); 
-                    calculateTotals();
-                });
-                
-                calculateTotals();
+                setupEventListeners(newRow);
             }
             
             document.getElementById('add-tunjangan').addEventListener('click', () => addNewRow('tunjangan'));
             document.getElementById('add-potongan').addEventListener('click', () => addNewRow('potongan'));
-            
-            form.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-row')) {
-                    e.target.closest('.grid').remove();
-                    calculateTotals();
-                }
-            });
 
             calculateTotals();
         });

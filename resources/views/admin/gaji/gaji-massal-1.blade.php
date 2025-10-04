@@ -11,15 +11,13 @@
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg shadow-sm">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.636-1.21 2.862-1.21 3.498 0l6.234 11.857a2.25 2.25 0 01-1.749 3.544H3.766a2.25 2.25 0 01-1.749-3.544l6.234-11.857zM9 12.5a1 1 0 112 0 1 1 0 01-2 0zm1-4a1 1 0 011 1v2a1 1 0 11-2 0V9.5a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
+                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.21 2.862-1.21 3.498 0l6.234 11.857a2.25 2.25 0 01-1.749 3.544H3.766a2.25 2.25 0 01-1.749-3.544l6.234-11.857zM9 12.5a1 1 0 112 0 1 1 0 01-2 0zm1-4a1 1 0 011 1v2a1 1 0 11-2 0V9.5a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                     </div>
                     <div class="ml-4 flex-1">
                         <h3 class="text-sm font-bold text-yellow-800">
                             Pegawai Belum Menerima Gaji Bulan Ini ({{ $pegawaiBelumGajian->count() }} orang)
                         </h3>
-                        <p class="mt-1 text-sm text-yellow-700">Berikut adalah daftar pegawai aktif yang belum memiliki data gaji untuk periode ini. Gunakan filter di bawah untuk memproses gaji mereka.</p>
+                        <p class="mt-1 text-sm text-yellow-700">Gunakan filter di bawah untuk memproses gaji mereka.</p>
                         <div class="mt-3 max-h-48 overflow-y-auto border rounded-md bg-white">
                             <table class="w-full text-left text-sm">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -47,6 +45,7 @@
             </div>
         @endif
 
+        <!-- Form Filter Pegawai -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold border-b pb-2 mb-4">Filter Pegawai</h3>
             <form method="GET" action="{{ route('admin.gaji-massal.langkah1') }}" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end text-sm">
@@ -90,8 +89,9 @@
             </form>
         </div>
 
+        <!-- Hasil Filter & Form Lanjutan -->
         @if($pegawais->isNotEmpty())
-        <form method="POST" action="{{ route('admin.gaji-massal.langkah2') }}">
+        <form id="form-langkah-1" method="POST" action="{{ route('admin.gaji-massal.langkah2') }}">
             @csrf
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -123,7 +123,7 @@
                 </div>
 
                 <div class="mt-6 flex items-center gap-4">
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow">Lanjutkan ke Langkah 2</button>
+                    <button type="submit" id="submit-button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow">Lanjutkan ke Langkah 2</button>
                     <a href="{{ route('admin.gaji.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
                 </div>
             </div>
@@ -135,17 +135,48 @@
         @endif
     </div>
 
+    {{-- Modal/Popup Konfirmasi --}}
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0">
+                        <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                    </div>
+                    <div class="ml-4 text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Konfirmasi Lanjutkan</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="modal-message">Apakah Anda yakin ingin melanjutkan?</p>
+                            <div id="warning-pegawai" class="hidden mt-4">
+                                <p class="text-sm font-bold text-red-700">Peringatan: Pegawai berikut sudah memiliki data gaji pada periode ini.</p>
+                                <ul id="pegawai-list" class="mt-2 list-disc pl-5 text-sm text-red-600 max-h-32 overflow-y-auto">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirm-yes" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        Ya, Lanjutkan
+                    </button>
+                    <button type="button" id="confirm-no" class="mt-3 inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                        Tidak
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Skrip untuk dropdown dinamis
             const divisiSelect = document.getElementById('divisi_id');
             const timSelect = document.getElementById('tim_id');
             const allTimOptions = Array.from(timSelect.options);
-
             divisiSelect.addEventListener('change', function() {
                 const selectedDivisiId = this.value;
                 timSelect.innerHTML = '';
                 timSelect.appendChild(allTimOptions[0]); 
-
                 if (selectedDivisiId) {
                     allTimOptions.forEach(option => {
                         if (option.value && option.dataset.divisiId === selectedDivisiId) {
@@ -160,9 +191,75 @@
                     });
                 }
             });
-
             divisiSelect.dispatchEvent(new Event('change'));
             timSelect.value = "{{ request('tim_id') }}";
+
+            // Skrip untuk popup konfirmasi
+            const form = document.getElementById('form-langkah-1');
+            const modal = document.getElementById('confirmation-modal');
+            const confirmYes = document.getElementById('confirm-yes');
+            const confirmNo = document.getElementById('confirm-no');
+            const modalMessage = document.getElementById('modal-message');
+            const warningPegawai = document.getElementById('warning-pegawai');
+            const pegawaiList = document.getElementById('pegawai-list');
+
+            if (form) { // Hanya jalankan jika form ada di halaman
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+                    const pegawaiIds = formData.getAll('pegawai_ids[]');
+                    
+                    if (pegawaiIds.length === 0) {
+                        alert('Anda harus memilih setidaknya satu pegawai.');
+                        return;
+                    }
+
+                    modalMessage.textContent = `Anda akan memproses gaji untuk ${pegawaiIds.length} pegawai. Apakah Anda yakin?`;
+                    warningPegawai.classList.add('hidden');
+                    pegawaiList.innerHTML = '';
+                    modal.classList.remove('hidden');
+
+                    try {
+                        const response = await fetch("{{ route('admin.gaji-massal.cek') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                pegawai_ids: pegawaiIds,
+                                bulan: formData.get('bulan'),
+                                tahun: formData.get('tahun')
+                            })
+                        });
+                        
+                        const result = await response.json();
+
+                        if (result.data && result.data.length > 0) {
+                            warningPegawai.classList.remove('hidden');
+                            result.data.forEach(pegawai => {
+                                const li = document.createElement('li');
+                                li.textContent = `${pegawai.nama} (${pegawai.jabatan?.nama_jabatan || ''})`;
+                                pegawaiList.appendChild(li);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Gagal melakukan pengecekan:', error);
+                        alert('Terjadi kesalahan saat memeriksa data.');
+                        modal.classList.add('hidden');
+                    }
+                });
+            }
+
+            confirmYes.addEventListener('click', function() {
+                if(form) form.submit();
+            });
+
+            confirmNo.addEventListener('click', function() {
+                modal.classList.add('hidden');
+            });
         });
     </script>
 </x-app-layout>

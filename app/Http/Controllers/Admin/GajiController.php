@@ -21,7 +21,6 @@ class GajiController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil semua input filter
         $search = $request->get('search');
         $jabatanFilter = $request->get('jabatan');
         $bulanFilter = $request->get('bulan');
@@ -29,28 +28,10 @@ class GajiController extends Controller
 
         $query = Gaji::with(['pegawai.jabatan'])->latest();
 
-        // Terapkan filter pencarian nama
-        $query->when($search, function ($q) use ($search) {
-            $q->whereHas('pegawai', function ($subQuery) use ($search) {
-                $subQuery->where('nama', 'like', "%{$search}%");
-            });
-        });
-
-        // Terapkan filter jabatan
-        $query->when($jabatanFilter, function ($q) use ($jabatanFilter) {
-            $q->whereHas('pegawai.jabatan', function ($subQuery) use ($jabatanFilter) {
-                $subQuery->where('nama_jabatan', $jabatanFilter);
-            });
-        });
-
-        // --- PERBAIKAN: Tambahkan filter bulan dan tahun ---
-        $query->when($bulanFilter, function ($q) use ($bulanFilter) {
-            $q->where('bulan', $bulanFilter);
-        });
-
-        $query->when($tahunFilter, function ($q) use ($tahunFilter) {
-            $q->where('tahun', $tahunFilter);
-        });
+        $query->when($search, fn($q) => $q->whereHas('pegawai', fn($sq) => $sq->where('nama', 'like', "%{$search}%")));
+        $query->when($jabatanFilter, fn($q) => $q->whereHas('pegawai.jabatan', fn($sq) => $sq->where('nama_jabatan', $jabatanFilter)));
+        $query->when($bulanFilter, fn($q) => $q->where('bulan', $bulanFilter));
+        $query->when($tahunFilter, fn($q) => $q->where('tahun', $tahunFilter));
 
         $gaji = $query->paginate(10);
         $jabatan = Jabatan::orderBy('nama_jabatan')->get();
@@ -59,7 +40,6 @@ class GajiController extends Controller
         if (Carbon::now()->day > 1) {
             $bulanIni = Carbon::now()->month;
             $tahunIni = Carbon::now()->year;
-
             $pegawaiBelumGajian = Pegawai::where('tanggal_masuk', '<=', Carbon::now())
                 ->whereDoesntHave('gajis', function ($query) use ($bulanIni, $tahunIni) {
                     $query->where('bulan', $bulanIni)->where('tahun', $tahunIni);
@@ -69,16 +49,20 @@ class GajiController extends Controller
         return view('admin.gaji.index', compact('gaji', 'jabatan', 'pegawaiBelumGajian'));
     }
 
-    // ... (method lainnya tetap sama)
+    /**
+     * Menampilkan form untuk membuat data gaji baru.
+     */
     public function create()
     {
         $pegawais = Pegawai::orderBy('nama')->get();
         $masterTunjangans = MasterTunjangan::orderBy('nama_tunjangan')->get();
         $masterPotongans = MasterPotongan::orderBy('nama_potongan')->get();
-
         return view('admin.gaji.create', compact('pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
+    /**
+     * Menyimpan data gaji baru ke database.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -110,24 +94,22 @@ class GajiController extends Controller
             ]);
 
             if ($request->has('tunjangans')) {
-                foreach ($request->tunjangans as $tunjangan) {
-                    $gaji->tunjanganDetails()->create($tunjangan);
-                }
+                foreach ($request->tunjangans as $tunjangan) { $gaji->tunjanganDetails()->create($tunjangan); }
             }
-
             if ($request->has('potongans')) {
-                foreach ($request->potongans as $potongan) {
-                    $gaji->potonganDetails()->create($potongan);
-                }
+                foreach ($request->potongans as $potongan) { $gaji->potonganDetails()->create($potongan); }
             }
         });
 
         return redirect()->route('admin.gaji.index')->with('success', 'Data gaji berhasil ditambahkan.');
     }
 
+    /**
+     * Menampilkan form untuk mengedit data gaji.
+     */
     public function edit(Gaji $gaji)
     {
-        $gaji->load(['tunjanganDetails', 'potonganDetails']);
+        $gaji->load(['pegawai', 'tunjanganDetails', 'potonganDetails']);
         $pegawais = Pegawai::orderBy('nama')->get();
         $masterTunjangans = MasterTunjangan::orderBy('nama_tunjangan')->get();
         $masterPotongans = MasterPotongan::orderBy('nama_potongan')->get();
@@ -135,6 +117,9 @@ class GajiController extends Controller
         return view('admin.gaji.edit', compact('gaji', 'pegawais', 'masterTunjangans', 'masterPotongans'));
     }
 
+    /**
+     * Memperbarui data gaji di database.
+     */
     public function update(Request $request, Gaji $gaji)
     {
         $validated = $request->validate([
@@ -173,7 +158,6 @@ class GajiController extends Controller
                     $gaji->tunjanganDetails()->create($tunjangan);
                 }
             }
-
             if ($request->has('potongans')) {
                 foreach ($request->potongans as $potongan) {
                     $gaji->potonganDetails()->create($potongan);
@@ -197,5 +181,29 @@ class GajiController extends Controller
         $pdf = Pdf::loadView('admin.gaji.slip-gaji-pdf', $data);
         $namaFile = 'slip-gaji-' . $gaji->pegawai->nama . '-' . $gaji->bulan . '-' . $gaji->tahun . '.pdf';
         return $pdf->download($namaFile);
+    }
+    
+    public function cekGajiPegawai(Request $request)
+    {
+        $validated = $request->validate([
+            'pegawai_id' => 'required|exists:pegawais,id',
+            'bulan' => 'required|integer',
+            'tahun' => 'required|integer',
+        ]);
+
+        $gajiExists = Gaji::where('pegawai_id', $validated['pegawai_id'])
+            ->where('bulan', $validated['bulan'])
+            ->where('tahun', $validated['tahun'])
+            ->exists();
+
+        $pegawai = null;
+        if ($gajiExists) {
+            $pegawai = Pegawai::with(['jabatan', 'tim.divisi'])->find($validated['pegawai_id']);
+        }
+
+        return response()->json([
+            'exists' => $gajiExists,
+            'pegawai' => $pegawai
+        ]);
     }
 }

@@ -9,8 +9,8 @@
             font-size: 10px; 
             line-height: 1.4; 
             margin: 20px; 
-            background-color: #f8fafc; /* Light gray untuk feel modern */
-            color: #1f2937; /* Dark gray untuk text */
+            background-color: #ffffff; /* Putih polos agar print bersih */
+            color: #000000; /* Hitam pekat */
         }
         table { 
             width: 100%; 
@@ -21,10 +21,32 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Subtle shadow minimalis */
         }
         th, td { 
-            border: 1px solid #e2e8f0; /* Border tipis abu-abu muda */
-            padding: 8px 10px; /* Padding lebih nyaman */
-            text-align: left; 
+            border: 1px solid #e2e8f0;
+            padding: 8px 10px;
+            text-align: left;
+            color: #000000; /* Pastikan isi tabel hitam */
         }
+        thead th {
+            background-color: #cbd5e1 !important; /* abu lebih gelap */
+            color: #000000 !important;
+        }
+
+        /* Header nama kolom */
+        #table-performa thead th {
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: #cbd5e1 !important; /* abu agak gelap biar kontras */
+            color: #000000 !important;
+            font-weight: bold;
+        }
+
+        /* Baris terakhir TOTAL / RATA-RATA */
+        #table-performa tbody.footer-table tr td {
+            font-family: Helvetica, Arial, sans-serif;
+            font-weight: bold;
+            color: #000000;
+        }
+
+
         th { 
             background: linear-gradient(135deg, #6366f1, #8b5cf6); /* Gradient indigo-ungu youthful */
             color: white; 
@@ -98,10 +120,11 @@
         }
         /* Alternating row untuk tabel, feel modern */
         tbody tr:nth-child(even) {
-            background-color: #f8fafc;
+            background-color: #f1f5f9; /* Abu muda jelas */
         }
         tbody tr:hover {
-            background-color: #eff6ff; /* Hover effect jika PDF support, tapi minimalis */
+            background-color: #ffffff; /* Putih */
+
         }
     </style>
 </head>
@@ -387,7 +410,7 @@
     <table class="chart-grid">
         <tr>
             <td>
-                <h4>Total Kehadiran</h4>Total Kehadiran</h4>
+                <h4>Total Kehadiran</h4>
                 <img src="{{ $kehadiranUrl }}" alt="Chart Kehadiran">
             </td>
             <td>
@@ -416,7 +439,7 @@
     {{-- ========= HALAMAN 3: DETAIL PERFORMA PEGAWAI ========= --}}
     <div class="page-break"></div>
     <h3 class="section-header">Detail Data Performa Pegawai</h3>
-    <table>
+    <table id="table-performa">
         <thead>
             <tr>
                 <th>Nama Pegawai</th>
@@ -463,7 +486,7 @@
     {{-- ========= HALAMAN 4: DETAIL DATA KEHADIRAN ========= --}}
     <div class="page-break"></div>
     <h3 class="section-header">Detail Data Kehadiran & Keterlambatan</h3>
-    <table>
+    <table id="table-kehadiran">
         <thead>
             <tr>
                 <th>Tanggal</th>

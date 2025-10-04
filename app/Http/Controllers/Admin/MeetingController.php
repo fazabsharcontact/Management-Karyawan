@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 class MeetingController extends Controller
 {
     /**
-     * Menampilkan daftar semua meeting.
      */
     public function index()
     {
@@ -20,7 +19,6 @@ class MeetingController extends Controller
     }
 
     /**
-     * Menampilkan form untuk membuat meeting baru.
      */
     public function create()
     {
@@ -29,7 +27,6 @@ class MeetingController extends Controller
     }
 
     /**
-     * Menyimpan meeting baru ke database.
      */
     public function store(Request $request)
     {

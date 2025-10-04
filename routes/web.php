@@ -48,6 +48,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::resource('pegawai', PegawaiController::class)->names('admin.pegawai')->except(['show']);
     Route::resource('gaji', GajiController::class)->names('admin.gaji');
+    Route::post('gaji/cek-pegawai', [GajiController::class, 'cekGajiPegawai'])->name('admin.gaji.cek');
     Route::get('gaji/{gaji}/slip', [GajiController::class, 'unduhSlipGaji'])->name('admin.gaji.slip');
     Route::resource('jabatan', JabatanController::class)->names('admin.jabatan');
     Route::get('tunjangan-potongan', [TunjanganPotonganController::class, 'index'])->name('admin.tunjangan-potongan.index');
@@ -64,12 +65,12 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('pengumuman', PengumumanController::class)
         ->names('admin.pengumuman')
         ->only(['index', 'create', 'store', 'destroy']);
-    // --- Rute Laporan (Dirapikan) ---
     Route::get('laporan/performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
     Route::get('laporan/performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
     Route::get('gaji-massal/langkah-1', [GajiMassalController::class, 'langkahSatu'])->name('admin.gaji-massal.langkah1');
     Route::post('gaji-massal/langkah-2', [GajiMassalController::class, 'langkahDua'])->name('admin.gaji-massal.langkah2');
     Route::post('gaji-massal/simpan', [GajiMassalController::class, 'simpan'])->name('admin.gaji-massal.simpan');
+    Route::post('gaji-massal/cek-gaji', [GajiMassalController::class, 'cekGajiSudahAda'])->name('admin.gaji-massal.cek');
 });
 // PegawaiDashboard
 Route::prefix('pegawai')->middleware(['auth', 'role:pegawai'])->group(function () {

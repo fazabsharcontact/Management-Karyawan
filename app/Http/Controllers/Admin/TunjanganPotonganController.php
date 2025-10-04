@@ -15,12 +15,8 @@ class TunjanganPotonganController extends Controller
      */
     public function index()
     {
-        // Ambil semua data dari kedua model dengan paginasi
-        // Paginasi diberi nama unik ('tunjangan_page' dan 'potongan_page') agar tidak bentrok
         $masterTunjangans = MasterTunjangan::latest()->paginate(5, ['*'], 'tunjangan_page');
         $masterPotongans = MasterPotongan::latest()->paginate(5, ['*'], 'potongan_page');
-
-        // Kirim kedua data ke satu view yang sama
         return view('admin.tunjangan.index', compact('masterTunjangans', 'masterPotongans'));
     }
 }

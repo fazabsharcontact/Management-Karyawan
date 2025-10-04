@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="p-6">
-        <form action="{{ route('admin.gaji-massal.simpan') }}" method="POST" class="space-y-6">
+        <form id="form-langkah-2" action="{{ route('admin.gaji-massal.simpan') }}" method="POST" class="space-y-6">
             @csrf
             <input type="hidden" name="bulan" value="{{ $bulan }}">
             <input type="hidden" name="tahun" value="{{ $tahun }}">
@@ -17,7 +17,6 @@
                     <ul class="list-disc pl-5 text-sm text-gray-600">
                         @foreach($pegawais as $pegawai)
                             <li>{{ $pegawai->nama }} (Gaji Pokok: Rp {{ number_format($pegawai->gaji_pokok, 0, ',', '.') }})</li>
-                            {{-- Hidden input untuk mengirim data gaji setiap pegawai --}}
                             <input type="hidden" name="pegawai_gaji[{{ $loop->index }}][pegawai_id]" value="{{ $pegawai->id }}">
                             <input type="hidden" name="pegawai_gaji[{{ $loop->index }}][gaji_pokok]" value="{{ $pegawai->gaji_pokok }}" class="gaji-pokok-pegawai">
                         @endforeach
@@ -41,7 +40,6 @@
                 <div id="potongan-container" class="space-y-3"></div>
             </div>
 
-            {{-- --- BAGIAN BARU: RINGKASAN REAL-TIME --- --}}
             <div class="bg-gray-50 p-6 rounded-lg shadow border border-gray-200">
                  <h3 class="text-lg font-semibold border-b pb-2 mb-4">Estimasi Total Pengeluaran Gaji</h3>
                  <div class="space-y-2 text-sm">
@@ -59,11 +57,35 @@
         </form>
     </div>
 
+    {{-- Modal Konfirmasi Simpan --}}
+    <div id="confirmation-modal-save" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Konfirmasi Penyimpanan</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">Anda akan menyimpan data gaji untuk {{ $pegawais->count() }} pegawai. Apakah Anda yakin ingin melanjutkan?</p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="confirm-save-yes" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600">Ya, Simpan Semua</button>
+                    <button id="confirm-save-no" class="mt-3 px-4 py-2 bg-white text-gray-700 text-base font-medium rounded-md w-full shadow-sm border">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- --- PERBAIKAN: JavaScript lengkap disalin di sini --- --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const masterTunjangans = @json($masterTunjangans);
             const masterPotongans = @json($masterPotongans);
             const jumlahPegawai = {{ $pegawais->count() }};
+            const form = document.getElementById('form-langkah-2');
+            const modal = document.getElementById('confirmation-modal-save');
+            const confirmYes = document.getElementById('confirm-save-yes');
+            const confirmNo = document.getElementById('confirm-save-no');
             
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency', currency: 'IDR', minimumFractionDigits: 0
@@ -149,8 +171,18 @@
             
             document.getElementById('add-tunjangan').addEventListener('click', () => addNewRow('tunjangan'));
             document.getElementById('add-potongan').addEventListener('click', () => addNewRow('potongan'));
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+            });
+            confirmYes.addEventListener('click', function() {
+                form.submit();
+            });
+            confirmNo.addEventListener('click', function() {
+                modal.classList.add('hidden');
+            });
 
-            // Kalkulasi awal saat halaman dimuat
             calculateMassalTotals();
         });
     </script>

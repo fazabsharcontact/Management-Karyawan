@@ -75,8 +75,7 @@
             <h3 class="text-xl font-bold text-gray-800">Laporan Performa untuk: {{ $filter['title'] }}</h3>
             <p class="text-sm text-gray-500">Periode: {{ $filter['tanggal_mulai'] }} - {{ $filter['tanggal_selesai'] }}</p>
         </div>
-
-        {{-- --- PERUBAHAN UTAMA: Tata letak grid diubah menjadi 2 kolom --- --}}
+        
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold mb-4 text-gray-700">Total Kehadiran</h3>
@@ -253,4 +252,4 @@
             });
         });
     </script>
-</x-app-layout>
+</x-app-layout> 
