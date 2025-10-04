@@ -49,7 +49,6 @@ class JabatanController extends Controller
         $validated = $request->validate([
             // PERBAIKAN: Nama tabel di 'unique' harus 'jabatans' (plural)
             'nama_jabatan' => 'required|unique:jabatans,nama_jabatan',
-            'tunjangan' => 'required|numeric|min:0',
             'gaji_awal' => 'required|numeric|min:0', // Menambahkan validasi untuk gaji_awal
         ]);
 

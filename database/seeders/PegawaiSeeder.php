@@ -15,12 +15,31 @@ class PegawaiSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ambil data master
+        // --- 1. MEMBUAT DATA PEGAWAI KHUSUS UNTUK ADMIN ---
+        $adminUser = User::where('role', 'admin')->first();
+        $jabatanManager = Jabatan::where('nama_jabatan', 'Manager')->first();
+        $timRekrutmen = Tim::where('nama_tim', 'Rekrutmen')->first();
+
+        // Pastikan user admin dan data master (jabatan, tim) ditemukan
+        if ($adminUser && $jabatanManager && $timRekrutmen) {
+            Pegawai::create([
+                'user_id'       => $adminUser->id,
+                'jabatan_id'    => $jabatanManager->id,
+                'tim_id'        => $timRekrutmen->id,
+                'nama'          => 'Administrator',
+                'email'         => $adminUser->email,
+                'no_hp'         => fake()->phoneNumber(),
+                'alamat'        => fake()->address(),
+                'tanggal_masuk' => now()->subYears(3), // Diasumsikan admin sudah lama bergabung
+                'gaji_pokok'    => 15000000,
+            ]);
+        }
+        
+        // --- 2. MEMBUAT DATA PEGAWAI LAINNYA (LOGIKA LAMA ANDA) ---
         $jabatans = Jabatan::all();
         $tims = Tim::all();
         $usersPegawai = User::where('role', 'pegawai')->get();
 
-        // Membuat data pegawai dari user yang sudah ada
         foreach ($usersPegawai as $user) {
             // Khusus untuk user manager
             if (str_contains($user->username, 'manager')) {

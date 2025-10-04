@@ -11,6 +11,9 @@ use App\Http\Controllers\Pegawai\PegawaiGajiController;
 use App\Http\Controllers\Pegawai\PegawaiKehadiranController;
 use App\Http\Controllers\Pegawai\PegawaiPengumumanController;
 use App\Http\Controllers\Pegawai\PegawaiCutiController;
+use App\Http\Controllers\Pegawai\TugasPegawaiController;
+use App\Http\Controllers\Pegawai\TugasPengumpulanController;
+use App\Http\Controllers\Pegawai\PegawaiMeetingController;
 use App\Http\Controllers\Admin\TunjanganPotonganController;
 use App\Http\Controllers\Admin\MasterTunjanganController;
 use App\Http\Controllers\Admin\MasterPotonganController;
@@ -22,6 +25,9 @@ use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\PengumumanController;
 use App\Http\Controllers\Admin\LaporanPerformaController;
 use App\Http\Controllers\Admin\GajiMassalController;
+use App\Http\Controllers\Admin\AdminTugasPengumpulanController;
+use App\Http\Controllers\Admin\AdminTugasController;
+use App\Http\Controllers\Admin\AdminKehadiranController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -61,12 +67,18 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('cuti', [CutiController::class, 'index'])->name('admin.cuti.index');
     Route::patch('cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('admin.cuti.updateStatus');
     Route::post('cuti/reset-tahunan', [CutiController::class, 'resetCutiTahunan'])->name('admin.cuti.resetTahunan');
-
     Route::resource('pengumuman', PengumumanController::class)
         ->names('admin.pengumuman')
         ->only(['index', 'create', 'store', 'destroy']);
-    Route::get('laporan/performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
-    Route::get('laporan/performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
+    Route::get('laporan-performa', [LaporanPerformaController::class, 'index'])->name('admin.laporan.performa');
+    Route::get('laporan-performa/unduh-pdf', [LaporanPerformaController::class, 'unduhPdf'])->name('admin.laporan.performa.pdf');
+    Route::get('tugas/pengumpulan', [AdminTugasPengumpulanController::class, 'index'])->name('admin.tugas_pengumpulan.index');
+    Route::post('tugas/pengumpulan/{id}/status', [AdminTugasPengumpulanController::class, 'updateStatus'])->name('admin.tugas_pengumpulan.update');
+    Route::get('/tugas', [AdminTugasController::class, 'index'])->name('admin.tugas.index');
+    Route::post('/tugas', [AdminTugasController::class, 'store'])->name('admin.tugas.store');
+    Route::get('kehadiran', [AdminKehadiranController::class, 'index'])->name('admin.kehadiran.index');
+    Route::get('kehadiran/{pegawai}', [AdminKehadiranController::class, 'show'])->name('admin.kehadiran.show');
+    Route::get('kehadiran/bukti/{id}', [AdminKehadiranController::class, 'downloadBukti'])->name('admin.kehadiran.downloadBukti');
     Route::get('gaji-massal/langkah-1', [GajiMassalController::class, 'langkahSatu'])->name('admin.gaji-massal.langkah1');
     Route::post('gaji-massal/langkah-2', [GajiMassalController::class, 'langkahDua'])->name('admin.gaji-massal.langkah2');
     Route::post('gaji-massal/simpan', [GajiMassalController::class, 'simpan'])->name('admin.gaji-massal.simpan');
@@ -79,8 +91,15 @@ Route::prefix('pegawai')->middleware(['auth', 'role:pegawai'])->group(function (
     Route::get('/kehadiran', [PegawaiKehadiranController::class, 'index'])->name('pegawai.kehadiran.index');
     Route::post('/kehadiran', [PegawaiKehadiranController::class, 'store'])->name('pegawai.kehadiran.store');
     Route::get('/pengumuman', [PegawaiPengumumanController::class, 'index'])->name('pegawai.pengumuman.index');
-    Route::get('/pegawai/cuti', [App\Http\Controllers\Pegawai\PegawaiCutiController::class, 'index'])->name('pegawai.cuti.index');
-    Route::get('/pegawai/cuti/create', [App\Http\Controllers\Pegawai\PegawaiCutiController::class, 'create'])->name('pegawai.cuti.create');
-    Route::post('/pegawai/cuti', [App\Http\Controllers\Pegawai\PegawaiCutiController::class, 'store'])->name('pegawai.cuti.store');
+    Route::get('/pegawai/cuti', [PegawaiCutiController::class, 'index'])->name('pegawai.cuti.index');
+    Route::get('/pegawai/cuti/create', [PegawaiCutiController::class, 'create'])->name('pegawai.cuti.create');
+    Route::post('/pegawai/cuti', [PegawaiCutiController::class, 'store'])->name('pegawai.cuti.store');
+    Route::get('/tugas', [TugasPegawaiController::class, 'index'])->name('pegawai.tugas.index');
+    Route::get('/tugas/{id}', [TugasPegawaiController::class, 'show'])->name('pegawai.tugas.show');
+    Route::post('/tugas/{id}/status', [TugasPegawaiController::class, 'updateStatus'])->name('pegawai.tugas.updateStatus');
+    Route::post('/tugas/{id}/pengumpulan', [TugasPengumpulanController::class, 'store'])->name('pegawai.tugas.pengumpulan.store');
+    Route::get('meeting', [PegawaiMeetingController::class, 'index'])->name('pegawai.meeting.index');
+    Route::get(uri: 'meeting/{meeting}', action: [PegawaiMeetingController::class, 'show'])->name('pegawai.meeting.show');
+    Route::get('/pegawai/gaji/slip/{gaji}', [PegawaiGajiController::class, 'unduhSlipGaji'])
+        ->name('pegawai.gaji.unduh');
 });
-

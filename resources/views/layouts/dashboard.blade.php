@@ -58,11 +58,14 @@
                         🎖️ Manajemen Tunjangan
                     </a>
                 </li>
+<<<<<<< HEAD
                 <!-- <li>
                     <a href="#" class="block px-3 py-2 rounded hover:bg-gray-700">
                         🎖️ Manajemen Tim & Divisi
                     </a>
                 </li> -->
+=======
+>>>>>>> origin/backend-pegawai
             </ul>
         </aside>
 

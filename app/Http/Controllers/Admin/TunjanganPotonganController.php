@@ -20,4 +20,3 @@ class TunjanganPotonganController extends Controller
         return view('admin.tunjangan.index', compact('masterTunjangans', 'masterPotongans'));
     }
 }
-

@@ -13,46 +13,66 @@ class PegawaiDashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $userId = Auth::id();
+        $pegawai = Pegawai::where('user_id', $userId)->first();
 
-        if (!$user || $user->role !== 'pegawai') {
-            abort(403, 'Unauthorized');
+        if (!$pegawai) {
+            return redirect()->back()->with('error', 'Data pegawai Anda tidak ditemukan.');
         }
 
-        $pegawai = Pegawai::where('user_id', $user->id)->firstOrFail();
-
+        $pegawaiId = $pegawai->id;
         $bulanSekarang = Carbon::now()->month;
         $tahunSekarang = Carbon::now()->year;
 
-        // Total Hadir
-        $totalHariMasuk = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        // --- STATISTIK KEHADIRAN BULAN INI ---
+
+        // Total Hadir (Sudah benar)
+        $totalHariMasuk = Kehadiran::where('pegawai_id', $pegawaiId)
             ->where('status', 'Hadir')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
-        // Total Izin
-        $totalIzin = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        // Total Izin (Sudah benar)
+        $totalIzin = Kehadiran::where('pegawai_id', $pegawaiId)
             ->where('status', 'Izin')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
-        // Total Sakit
-        $totalSakit = Kehadiran::where('pegawai_id', $pegawai->id_pegawai)
+        // Total Sakit (Sudah benar)
+        $totalSakit = Kehadiran::where('pegawai_id', $pegawaiId)
             ->where('status', 'Sakit')
             ->whereMonth('tanggal', $bulanSekarang)
             ->whereYear('tanggal', $tahunSekarang)
             ->count();
 
-        // Total Gaji bulan ini
-        $totalGaji = Gaji::where('pegawai_id', $pegawai->id_pegawai)
-            ->where('bulan', $bulanSekarang)
+        // **BARU:** Total Absen
+        $totalAbsen = Kehadiran::where('pegawai_id', $pegawaiId)
+            ->where('status', 'Absen') // Asumsi status 'Absen'
+            ->whereMonth('tanggal', $bulanSekarang)
+            ->whereYear('tanggal', $tahunSekarang)
+            ->count();
+
+        // **BARU:** Total Terlambat
+        // Asumsi: 'Terlambat' adalah status terpisah atau sub-status kehadiran
+        $totalTerlambat = Kehadiran::where('pegawai_id', $pegawaiId)
+            ->where('status', 'Terlambat') // Ganti 'is_terlambat' dengan kolom yang relevan di tabel Kehadiran Anda
+            ->whereMonth('tanggal', $bulanSekarang)
+            ->whereYear('tanggal', $tahunSekarang)
+            ->count();
+
+
+        // --- STATISTIK GAJI TAHUN INI ---
+
+        // **PERUBAHAN:** Total Gaji TAHUN ini (bukan bulan ini)
+        $totalGajiTahun = Gaji::where('pegawai_id', $pegawaiId)
             ->where('tahun', $tahunSekarang)
             ->sum('gaji_bersih');
 
-        // Grafik Gaji per bulan
-        $gajiPerBulan = Gaji::where('pegawai_id', $pegawai->id_pegawai)
+        // --- DATA GRAFIK GAJI PER BULAN (Sudah benar) ---
+
+        $gajiPerBulan = Gaji::where('pegawai_id', $pegawaiId)
             ->where('tahun', $tahunSekarang)
             ->orderBy('bulan')
             ->pluck('gaji_bersih', 'bulan')
@@ -65,14 +85,28 @@ class PegawaiDashboardController extends Controller
             $dataGaji[$bulan - 1] = $total;
         }
 
+        // --- DATA GRAFIK KEHADIRAN BULAN INI ---
+        $dataKehadiran = [
+            'Hadir' => $totalHariMasuk,
+            'Izin' => $totalIzin,
+            'Sakit' => $totalSakit,
+            'Absen' => $totalAbsen,
+            'Terlambat' => $totalTerlambat,
+        ];
+
         return view('pegawai.dashboard', compact(
             'pegawai',
             'totalHariMasuk',
             'totalIzin',
             'totalSakit',
-            'totalGaji',
+            'totalAbsen', // BARU
+            'totalTerlambat', // BARU
+            'totalGajiTahun', // GANTI: totalGaji menjadi totalGajiTahun
             'bulanArray',
-            'dataGaji'
+            'dataGaji',
+            'dataKehadiran', // BARU untuk chart
+            'tahunSekarang', // <--- JANGAN LUPA DIBUNGKUS DENGAN COMPACT!
+            'bulanSekarang'  // <--- Tambahkan juga bulanSekarang (jika ingin digunakan)
         ));
     }
 }

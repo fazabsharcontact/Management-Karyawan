@@ -13,12 +13,30 @@
 
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Pegawai Terpilih ({{ $pegawais->count() }} orang)</h3>
-                <div class="max-h-40 overflow-y-auto">
-                    <ul class="list-disc pl-5 text-sm text-gray-600">
+                
+                {{-- ====================================================== --}}
+                {{--         PERUBAHAN UTAMA: TAMPILKAN INFO BANK           --}}
+                {{-- ====================================================== --}}
+                <div class="max-h-60 overflow-y-auto">
+                    <ul class="space-y-3 text-sm">
                         @foreach($pegawais as $pegawai)
-                            <li>{{ $pegawai->nama }} (Gaji Pokok: Rp {{ number_format($pegawai->gaji_pokok, 0, ',', '.') }})</li>
+                        <li class="p-2 border-b last:border-0">
+                            <div>
+                                <span class="font-medium text-gray-800">{{ $pegawai->nama }}</span>
+                                <span class="text-gray-600">(Gaji Pokok: Rp {{ number_format($pegawai->gaji_pokok, 0, ',', '.') }})</span>
+                            </div>
+                            <div class="text-xs text-gray-500 ml-4">
+                                @if($pegawai->nama_bank && $pegawai->nomor_rekening)
+                                    <span class="font-semibold">Transfer ke:</span> {{ $pegawai->nama_bank }} - {{ $pegawai->nomor_rekening }}
+                                @else
+                                    <span class="text-red-500 font-semibold">Peringatan: Informasi bank belum diisi.</span>
+                                @endif
+                            </div>
+                            
+                            {{-- Input hidden untuk data form --}}
                             <input type="hidden" name="pegawai_gaji[{{ $loop->index }}][pegawai_id]" value="{{ $pegawai->id }}">
                             <input type="hidden" name="pegawai_gaji[{{ $loop->index }}][gaji_pokok]" value="{{ $pegawai->gaji_pokok }}" class="gaji-pokok-pegawai">
+                        </li>
                         @endforeach
                     </ul>
                 </div>
@@ -41,13 +59,13 @@
             </div>
 
             <div class="bg-gray-50 p-6 rounded-lg shadow border border-gray-200">
-                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Estimasi Total Pengeluaran Gaji</h3>
-                 <div class="space-y-2 text-sm">
+                <h3 class="text-lg font-semibold border-b pb-2 mb-4">Estimasi Total Pengeluaran Gaji</h3>
+                <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span>Total Gaji Pokok ({{ $pegawais->count() }} orang):</span> <span id="summary-total-pokok" class="font-medium">Rp 0</span></div>
                     <div class="flex justify-between"><span>Total Tunjangan Keseluruhan:</span> <span id="summary-total-tunjangan" class="text-green-600 font-medium">Rp 0</span></div>
                     <div class="flex justify-between"><span>Total Potongan Keseluruhan:</span> <span id="summary-total-potongan" class="text-red-600 font-medium">Rp 0</span></div>
                     <div class="flex justify-between font-bold text-base border-t pt-2 mt-2"><span>Total Gaji Bersih Dikeluarkan:</span> <span id="summary-grand-total" class="text-blue-700">Rp 0</span></div>
-                 </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-4">
@@ -76,9 +94,9 @@
         </div>
     </div>
 
-    {{-- --- PERBAIKAN: JavaScript lengkap disalin di sini --- --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // ... (Seluruh JavaScript Anda dari file asli disalin ke sini tanpa perubahan)
             const masterTunjangans = @json($masterTunjangans);
             const masterPotongans = @json($masterPotongans);
             const jumlahPegawai = {{ $pegawais->count() }};

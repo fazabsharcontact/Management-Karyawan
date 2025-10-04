@@ -11,13 +11,19 @@
             {{-- Bagian Informasi Utama --}}
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Informasi Utama</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
                         <select name="pegawai_id" id="pegawai_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
                             <option value="">-- Pilih Pegawai --</option>
                             @foreach($pegawais as $p)
-                            <option value="{{ $p->id }}" data-gaji-pokok="{{ $p->gaji_pokok }}">{{ $p->nama }}</option>
+                                {{-- PERUBAHAN 1: Tambahkan data- atibut untuk bank --}}
+                                <option value="{{ $p->id }}" 
+                                        data-gaji-pokok="{{ $p->gaji_pokok }}"
+                                        data-nama-bank="{{ $p->nama_bank ?? '' }}"
+                                        data-nomor-rekening="{{ $p->nomor_rekening ?? '' }}">
+                                    {{ $p->nama }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -36,6 +42,18 @@
                     <div>
                         <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
                         <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai..." required>
+                    </div>
+                </div>
+
+                {{-- TAMBAHAN BARU: INFORMASI BANK (READONLY) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                     <div>
+                        <label for="nama_bank" class="block font-medium text-sm text-gray-700">Nama Bank</label>
+                        <input type="text" id="nama_bank" class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai untuk melihat" readonly>
+                    </div>
+                     <div>
+                        <label for="nomor_rekening" class="block font-medium text-sm text-gray-700">Nomor Rekening</label>
+                        <input type="text" id="nomor_rekening" class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai untuk melihat" readonly>
                     </div>
                 </div>
             </div>
@@ -57,13 +75,13 @@
             </div>
             
             <div class="bg-gray-50 p-6 rounded-lg shadow">
-                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
-                 <div class="space-y-2 text-sm">
+                <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
+                <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span>Gaji Pokok:</span> <span id="summary-gaji-pokok">Rp 0</span></div>
                     <div class="flex justify-between"><span>Total Tunjangan:</span> <span id="summary-total-tunjangan" class="text-green-600">Rp 0</span></div>
                     <div class="flex justify-between"><span>Total Potongan:</span> <span id="summary-total-potongan" class="text-red-600">Rp 0</span></div>
                     <div class="flex justify-between font-bold text-base border-t pt-2 mt-2"><span>Gaji Bersih (Estimasi):</span> <span id="summary-gaji-bersih">Rp 0</span></div>
-                 </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-4 pt-4">
@@ -130,10 +148,23 @@
 
             document.getElementById('gaji_pokok').addEventListener('input', calculateTotals);
 
+            // PERUBAHAN 2: Sempurnakan event listener
             document.getElementById('pegawai_id').addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
+                
+                // Ambil semua data dari atribut
                 const gajiPokok = selectedOption.getAttribute('data-gaji-pokok');
+                const namaBank = selectedOption.getAttribute('data-nama-bank');
+                const nomorRekening = selectedOption.getAttribute('data-nomor-rekening');
+                
+                // Isi field Gaji Pokok
                 document.getElementById('gaji_pokok').value = gajiPokok || '';
+
+                // Isi field Informasi Bank
+                document.getElementById('nama_bank').value = namaBank || '';
+                document.getElementById('nomor_rekening').value = nomorRekening || '';
+
+                // Hitung ulang total
                 calculateTotals();
             });
 
@@ -209,7 +240,15 @@
                 const pegawaiId = formData.get('pegawai_id');
 
                 if (!pegawaiId) {
-                    alert('Silakan pilih pegawai terlebih dahulu.');
+                    // Simple browser alert for quick feedback, can be replaced with a nicer modal
+                    const customAlert = document.createElement('div');
+                    customAlert.innerHTML = `
+                        <div style="position: fixed; top: 1rem; right: 1rem; background-color: #f8d7da; color: #721c24; padding: 1rem; border-radius: 0.25rem; border: 1px solid #f5c6cb; z-index: 1000;">
+                            Silakan pilih pegawai terlebih dahulu.
+                        </div>
+                    `;
+                    document.body.appendChild(customAlert);
+                    setTimeout(() => customAlert.remove(), 3000);
                     return;
                 }
                 
@@ -254,3 +293,4 @@
         });
     </script>
 </x-app-layout>
+

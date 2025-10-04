@@ -15,9 +15,9 @@ class StrukturOrganisasiSeeder extends Seeder
     public function run(): void
     {
         // Membuat Jabatan
-        $manager = Jabatan::create(['nama_jabatan' => 'Manager', 'tunjangan' => 5000000]);
-        $supervisor = Jabatan::create(['nama_jabatan' => 'Supervisor', 'tunjangan' => 2500000]);
-        $staff = Jabatan::create(['nama_jabatan' => 'Staff', 'tunjangan' => 1000000]);
+        $manager = Jabatan::create(['nama_jabatan' => 'Manager']);
+        $supervisor = Jabatan::create(['nama_jabatan' => 'Supervisor']);
+        $staff = Jabatan::create(['nama_jabatan' => 'Staff']);
 
         // Membuat Divisi
         $it = Divisi::create(['nama_divisi' => 'Teknologi Informasi']);

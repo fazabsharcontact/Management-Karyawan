@@ -19,6 +19,8 @@ class Pegawai extends Model
         'nama',
         'email',
         'no_hp',
+        'nama_bank',
+        'nomor_rekening',
         'alamat',
         'tanggal_masuk',
         'gaji_pokok',
@@ -66,7 +68,7 @@ class Pegawai extends Model
         return $this->hasMany(Tugas::class, 'penerima_id');
     }
 
-      public function sisaCuti()
+    public function sisaCuti()
     {
         return $this->hasOne(SisaCuti::class, 'pegawai_id');
     }

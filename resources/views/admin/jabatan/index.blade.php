@@ -32,7 +32,6 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="border-b px-4 py-2 text-left">Nama Jabatan</th>
-                            <th class="border-b px-4 py-2 text-left">Tunjangan</th>
                             {{-- KOLOM BARU DITAMBAHKAN --}}
                             <th class="border-b px-4 py-2 text-left">Gaji Awal</th>
                             <th class="border-b px-4 py-2 text-center">Aksi</th>

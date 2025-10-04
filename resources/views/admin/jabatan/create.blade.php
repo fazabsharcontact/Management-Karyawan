@@ -12,10 +12,6 @@
                     <input type="text" name="nama_jabatan" id="nama_jabatan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('nama_jabatan') }}" required autofocus>
                 </div>
                 <div>
-                    <label for="tunjangan" class="block font-medium text-sm text-gray-700">Tunjangan</label>
-                    <input type="number" name="tunjangan" id="tunjangan" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('tunjangan') }}" required>
-                </div>
-                <div>
                     <label for="gaji_awal" class="block font-medium text-sm text-gray-700">Gaji Awal</label>
                     <input type="number" name="gaji_awal" id="gaji_awal" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('gaji_awal') }}" required>
                 </div>

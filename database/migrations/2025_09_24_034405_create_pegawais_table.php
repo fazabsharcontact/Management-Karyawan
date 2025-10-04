@@ -17,18 +17,17 @@ return new class extends Migration
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
             $table->foreignId('jabatan_id')->constrained('jabatans')->onDelete('restrict');
             $table->foreignId('tim_id')->nullable()->constrained('tims')->onDelete('set null');
-            
             $table->string('nama', 100);
             $table->string('email', 100)->unique();
-            
-            // --- DIUBAH: Ukuran kolom diperbesar ---
-            $table->string('no_hp', 30)->nullable(); 
-            
+            $table->string('no_hp', 30)->nullable();
+            $table->string('nama_bank', 50)->nullable();
+            $table->string('nomor_rekening', 50)->nullable(); 
             $table->text('alamat')->nullable();
             $table->date('tanggal_masuk')->nullable();
             $table->decimal('gaji_pokok', 15, 2)->default(0);
             $table->tinyInteger('sisa_cuti_tahunan')->default(12);
             $table->timestamps();
+            
         });
     }
 

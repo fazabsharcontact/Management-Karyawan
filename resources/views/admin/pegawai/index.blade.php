@@ -14,7 +14,8 @@
                 <select name="jabatan" 
                         class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200">
                     <option value="">Semua Jabatan</option>
-                    @foreach($jabatan as $j)
+                    {{-- PERBAIKAN: Gunakan $jabatans (jamak) --}}
+                    @foreach($jabatans as $j)
                         <option value="{{ $j->nama_jabatan }}" 
                                 {{ request('jabatan') == $j->nama_jabatan ? 'selected' : '' }}>
                             {{ $j->nama_jabatan }}
@@ -29,6 +30,12 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
+             <div class="mb-4">
+                <a href="{{ route('admin.pegawai.create') }}" 
+                   class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                    + Tambah Pegawai
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse">
                     <thead class="bg-gray-50">
@@ -41,7 +48,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($pegawai as $p)
+                        {{-- PERBAIKAN: Gunakan $pegawais (jamak) --}}
+                        @forelse($pegawais as $p)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="border-b px-4 py-2 text-gray-800">{{ $p->nama }}</td>
                             <td class="border-b px-4 py-2 text-gray-800">
@@ -85,17 +93,8 @@
                 </table>
             </div>
 
-            {{-- --- PERBAIKAN: Tambahkan kembali link paginasi di sini --- --}}
             <div class="mt-4">
-                {{-- appends(request()->query()) akan memastikan filter tetap aktif saat pindah halaman --}}
-                {{ $pegawai->appends(request()->query())->links() }}
-            </div>
-            
-            <div class="mt-6">
-                <a href="{{ route('admin.pegawai.create') }}" 
-                   class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
-                    + Tambah Pegawai
-                </a>
+                {{ $pegawais->appends(request()->query())->links() }}
             </div>
         </div>
     </div>
