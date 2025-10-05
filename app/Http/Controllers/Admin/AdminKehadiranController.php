@@ -7,85 +7,71 @@ use Illuminate\Http\Request;
 use App\Models\Kehadiran;
 use App\Models\Pegawai;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage; // Pastikan ini diimpor
+use Illuminate\Support\Facades\Storage;
 
 class AdminKehadiranController extends Controller
 {
-    // ... (metode index dan show tidak diubah, sudah benar) ...
     public function index(Request $request)
     {
         $tahun = $request->get('tahun', now()->year);
         $bulan = $request->get('bulan', now()->month);
 
-        $kehadiran = Kehadiran::with('pegawai.user')
+        $query = Kehadiran::with('pegawai.user')
             ->when($request->pegawai_id, function ($query) use ($request) {
                 $query->where('pegawai_id', $request->pegawai_id);
             })
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
-            ->orderBy('tanggal', 'desc')
-            ->get();
+            ->orderBy('tanggal', 'desc');
 
+        // PERUBAHAN 1: Menggunakan paginate() untuk membatasi 20 data per halaman
+        $kehadiran = $query->paginate(20)->withQueryString();
+
+        // Query untuk data rekapitulasi
         $rekap = Kehadiran::selectRaw('pegawai_id,
-            SUM(CASE WHEN status="Hadir" THEN 1 ELSE 0 END) as total_hadir,
-            SUM(CASE WHEN status="Absen" THEN 1 ELSE 0 END) as total_absen,
-            SUM(CASE WHEN status="Sakit" THEN 1 ELSE 0 END) as total_sakit,
-            SUM(CASE WHEN status="Izin" THEN 1 ELSE 0 END) as total_izin,
-            SUM(CASE WHEN status="Terlambat" THEN 1 ELSE 0 END) as total_terlambat') // Tambah Terlambat di Rekap
+                SUM(CASE WHEN status="Hadir" THEN 1 ELSE 0 END) as total_hadir,
+                SUM(CASE WHEN status="Absen" THEN 1 ELSE 0 END) as total_absen,
+                SUM(CASE WHEN status="Sakit" THEN 1 ELSE 0 END) as total_sakit,
+                SUM(CASE WHEN status="Izin" THEN 1 ELSE 0 END) as total_izin,
+                SUM(CASE WHEN status="Terlambat" THEN 1 ELSE 0 END) as total_terlambat')
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
+            ->when($request->pegawai_id, fn($q) => $q->where('pegawai_id', $request->pegawai_id)) // Filter rekap juga
             ->groupBy('pegawai_id')
             ->with('pegawai.user')
             ->get();
+        
+        // PERUBAHAN 2: Ganti nama variabel menjadi jamak ($pegawais)
+        $pegawais = Pegawai::select('id', 'nama')->orderBy('nama')->get();
 
-        $pegawai = Pegawai::orderBy('nama')->get();
-
-        return view('admin.kehadiran.index', compact('kehadiran', 'rekap', 'tahun', 'bulan', 'pegawai'));
+        return view('admin.kehadiran.index', compact('kehadiran', 'rekap', 'tahun', 'bulan', 'pegawais'));
     }
-
 
     public function show($pegawaiId, Request $request)
     {
         $tahun = $request->get('tahun', now()->year);
         $bulan = $request->get('bulan', now()->month);
-
         $pegawai = Pegawai::with('user')->findOrFail($pegawaiId);
-
         $kehadiran = Kehadiran::where('pegawai_id', $pegawai->id)
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->orderBy('tanggal', 'desc')
             ->get();
-
         return view('admin.kehadiran.show', compact('pegawai', 'kehadiran', 'tahun', 'bulan'));
     }
-
-    /**
-     * Mengunduh file bukti kehadiran (Izin/Sakit).
-     */
+    
     public function downloadBukti($id)
     {
         $kehadiran = Kehadiran::findOrFail($id);
-
         if (!$kehadiran->bukti) {
             return redirect()->back()->with('error', 'Tidak ada file bukti untuk absensi ini.');
         }
-
         $filePath = $kehadiran->bukti;
-
-        // Gunakan Storage::path() untuk mendapatkan path absolut
         $absolutePath = Storage::disk('public')->path($filePath);
-
-        // Cek apakah file ada secara fisik
         if (!file_exists($absolutePath)) {
-            return redirect()->back()->with('error', 'File bukti tidak ditemukan di server (Path: ' . $absolutePath . ')');
+            return redirect()->back()->with('error', 'File bukti tidak ditemukan di server.');
         }
-
-        // Tentukan nama file yang akan didownload
-        // Kita ambil nama asli file yang disimpan (bagian terakhir dari path)
         $fileName = basename($filePath);
-
-        // Menggunakan helper response()->download()
         return response()->download($absolutePath, $fileName);
     }
 }

@@ -12,9 +12,13 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('tugas_id');
             $table->unsignedBigInteger('pegawai_id');
-            $table->string('file_pengumpulan');
+            $table->string('file');
             $table->text('catatan')->nullable();
-            $table->enum('status', ['Baru', 'Dikerjakan', 'Ditinjau','Selesai'])->default('Baru');
+
+            // --- PERBAIKAN: Sesuaikan nilai ENUM dengan status yang benar ---
+            // Status untuk pengumpulan tugas adalah 'pending', 'diterima', atau 'revisi'.
+            $table->enum('status', ['pending', 'diterima', 'revisi'])->default('pending');
+            
             $table->timestamps();
 
             $table->foreign('tugas_id')->references('id')->on('tugas')->onDelete('cascade');
