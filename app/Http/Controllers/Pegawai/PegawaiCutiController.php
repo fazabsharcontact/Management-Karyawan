@@ -7,12 +7,20 @@ use App\Models\Cuti;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-// PERBAIKAN: Nama class diubah agar sesuai dengan nama file
 class PegawaiCutiController extends Controller
 {
     public function index()
     {
+        // Pastikan relasi sisaCuti sudah di-load dengan benar
         $pegawai = Auth::user()->pegawai->load('sisaCuti');
+
+        // Jika relasi sisaCuti tidak ada, buatkan data default
+        if (!$pegawai->sisaCuti) {
+            $pegawai->sisaCuti()->create(['sisa_cuti' => 12]);
+            // Muat ulang model pegawai untuk mendapatkan data sisaCuti yang baru
+            $pegawai->load('sisaCuti');
+        }
+
         $cutis = Cuti::where('pegawai_id', $pegawai->id)
             ->latest()
             ->paginate(10);

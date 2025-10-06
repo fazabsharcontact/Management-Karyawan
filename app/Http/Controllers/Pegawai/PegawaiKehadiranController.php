@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Pegawai;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Kehadiran;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use App\Models\Pegawai;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PegawaiKehadiranController extends Controller
 {
@@ -16,10 +16,9 @@ class PegawaiKehadiranController extends Controller
      */
     public function index(Request $request)
     {
-        $pegawai = Pegawai::where('user_id', Auth::id())->first();
-
+        $pegawai = Auth::user()->pegawai;
         if (!$pegawai) {
-            return redirect()->back()->with('error', 'Pegawai tidak ditemukan!');
+            abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
         $tahun = $request->get('tahun', now()->year);
@@ -29,117 +28,78 @@ class PegawaiKehadiranController extends Controller
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->orderByDesc('tanggal')
-            ->get();
+            ->paginate(10) // Paginasi 10 data per halaman
+            ->withQueryString();
 
         return view('pegawai.kehadiran.index', compact('kehadiran', 'tahun', 'bulan'));
     }
 
     /**
-     * Memproses absensi (masuk, pulang, izin, atau sakit).
+     * Memproses presensi (masuk, pulang, izin, atau sakit).
      */
     public function store(Request $request)
     {
-        $pegawai = Pegawai::where('user_id', Auth::id())->first();
+        $pegawai = Auth::user()->pegawai;
         if (!$pegawai) {
-            return redirect()->back()->with('error', 'Pegawai tidak ditemukan!');
+            return back()->with('error', 'Profil pegawai tidak ditemukan.');
         }
 
-        $tanggal = Carbon::today('Asia/Jakarta')->toDateString();
+        $tanggal = Carbon::today('Asia/Jakarta');
         $now = Carbon::now('Asia/Jakarta');
 
-        $kehadiran = Kehadiran::where('pegawai_id', $pegawai->id)
-            ->whereDate('tanggal', $tanggal)
+        $kehadiranHariIni = Kehadiran::where('pegawai_id', $pegawai->id)
+            ->whereDate('tanggal', $tanggal->toDateString())
             ->first();
 
-        // --- 1. ABSEN MASUK / IZIN / SAKIT (Jika Belum Ada Record) ---
-        if (!$kehadiran) {
+        // --- 1. JIKA BELUM ADA PRESENSI SAMA SEKALI HARI INI ---
+        if (!$kehadiranHariIni) {
+            $status = $request->input('status');
 
-            // Batas Waktu Absensi
-            $startAbsen = Carbon::createFromTime(8, 50, 0, 'Asia/Jakarta');
-            $endHadir = Carbon::createFromTime(9, 10, 0, 'Asia/Jakarta');      // Batas Akhir HADIR: 09:10:00
-            $endTerlambat = Carbon::createFromTime(13, 0, 0, 'Asia/Jakarta');  // Batas Akhir TERLAMBAT/IZIN/SAKIT: 13:00:00
+            if ($status === 'Hadir') {
+                $startAbsen = $tanggal->copy()->addHours(8)->addMinutes(50);
+                $endHadir = $tanggal->copy()->addHours(9)->addMinutes(15);
+                $endTerlambat = $tanggal->copy()->addHours(13);
 
-            $inputStatus = $request->input('status');
-
-            // PASTIKAN VARIABEL INI DIDEFINISIKAN TEPAT
-            $isFormIzinSakit = in_array($inputStatus, ['Izin', 'Sakit']);
-
-            // --- LOGIKA UTAMA ABSEN MASUK/TERLAMBAT (Hadir/Terlambat) ---
-            if ($inputStatus == 'Hadir') {
-
-                // ... logika Hadir/Terlambat di sini (sudah benar) ...
-
-                // Tentukan status: Hadir atau Terlambat
-                if ($now->lessThanOrEqualTo($endHadir)) {
-                    $status = 'Hadir'; // 08:50:00 s/d 09:10:00
-                } else {
-                    $status = 'Terlambat'; // 09:10:01 s/d 13:00:00
+                if (!$now->between($startAbsen, $endTerlambat)) {
+                    return back()->with('error', "Waktu presensi masuk hanya antara 08:50 - 13:00 WIB.");
                 }
-                $jamMasuk = $now->toTimeString();
-
-                // --- LOGIKA UTAMA IZIN/SAKIT (Dari Modal Pop-up) ---
-            } elseif ($isFormIzinSakit) { // PASTIKAN MASUK KE BLOK INI DENGAN TEPAT
-
-                // Cek batasan waktu untuk Izin/Sakit (08:50 - 13:00)
-                if ($now->lessThan($startAbsen) || $now->greaterThan($endTerlambat)) {
-                    return redirect()->back()->with('error', "Pengajuan Izin/Sakit HANYA bisa dilakukan antara 08:50 sampai 13:00.");
+                $statusKehadiran = $now->lte($endHadir) ? 'Hadir' : 'Terlambat';
+                
+                Kehadiran::create([
+                    'pegawai_id' => $pegawai->id,
+                    'tanggal' => $tanggal->toDateString(),
+                    'status' => $statusKehadiran,
+                    'jam_masuk' => $now->toTimeString(),
+                ]);
+                return back()->with('success', 'Presensi masuk berhasil dicatat! Status: ' . $statusKehadiran);
+            }
+            
+            if (in_array($status, ['Izin', 'Sakit'])) {
+                 $request->validate(['bukti' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048']);
+                
+                $buktiPath = null;
+                if ($request->hasFile('bukti')) {
+                    $buktiPath = $request->file('bukti')->store('bukti_kehadiran', 'public');
                 }
 
-                $status = $inputStatus;
-                $jamMasuk = null;
-
-                // Validasi Bukti untuk Izin/Sakit (Sudah Benar)
-                $request->validate(
-                    ['bukti' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048'],
-                    ['bukti.required' => 'Wajib upload bukti untuk status Izin atau Sakit.']
-                );
-            } else {
-                return redirect()->back()->with('error', 'Status kehadiran tidak valid.');
+                Kehadiran::create([
+                    'pegawai_id' => $pegawai->id,
+                    'tanggal' => $tanggal->toDateString(),
+                    'status' => $status,
+                    'keterangan' => $request->keterangan,
+                    'bukti' => $buktiPath,
+                ]);
+                return back()->with('success', 'Pengajuan ' . $status . ' berhasil dikirim.');
             }
-
-            // Handle upload file bukti (BLOK INI YANG AKAN MEMBUAT 'bukti' TERISI)
-            $buktiPath = null;
-            // Pastikan pengecekan status menggunakan variabel $isFormIzinSakit yang sudah diset di atas
-            if ($isFormIzinSakit && $request->hasFile('bukti')) {
-                $buktiPath = $request->file('bukti')->store('bukti_kehadiran', 'public');
-            }
-
-            // Simpan record baru
-            Kehadiran::create([
-                'pegawai_id' => $pegawai->id,
-                'tanggal' => $tanggal,
-                'status' => $status,
-                'jam_masuk' => $jamMasuk,
-                'keterangan' => $request->keterangan ?? null, // Menggunakan null coalescing operator
-                'bukti' => $buktiPath, // INI YANG DIMASUKKAN KE KOLOM BUKTI
-            ]);
-
-            return redirect()->route('pegawai.kehadiran.index')->with('success', 'Absensi masuk berhasil dicatat! Status: ' . $status);
+            return back()->with('error', 'Aksi tidak valid.');
         }
 
-        // --- 2. ABSEN PULANG (Jika Sudah Ada Record Masuk) ---
-        if (!$kehadiran->jam_pulang) {
-            // Cek apakah statusnya adalah Hadir atau Terlambat (yang harus absen pulang)
-            if (!in_array($kehadiran->status, ['Hadir', 'Terlambat'])) {
-                return redirect()->back()->with('error', 'Anda tidak perlu absen pulang karena status kehadiran hari ini: ' . $kehadiran->status);
-            }
-
-            $pulangMulai = Carbon::createFromTime(17, 0, 0, 'Asia/Jakarta');
-            $pulangAkhir = Carbon::createFromTime(19, 0, 0, 'Asia/Jakarta');
-
-            if (!$now->between($pulangMulai, $pulangAkhir)) {
-                return redirect()->back()->with('error', 'Waktu absen pulang HANYA antara 17:00 sampai 19:00.');
-            }
-
-            // Update record dengan jam pulang
-            $kehadiran->update([
-                'jam_pulang' => $now->toTimeString(),
-            ]);
-
-            return redirect()->route('pegawai.kehadiran.index')->with('success', 'Absensi pulang berhasil dicatat!');
+        // --- 2. JIKA SUDAH PRESENSI MASUK, PROSES PRESENSI PULANG ---
+        if (in_array($kehadiranHariIni->status, ['Hadir', 'Terlambat']) && !$kehadiranHariIni->jam_pulang) {
+            $kehadiranHariIni->update(['jam_pulang' => $now->toTimeString()]);
+            return back()->with('success', 'Presensi pulang berhasil dicatat!');
         }
 
-        // --- 3. JIKA SUDAH ABSEN MASUK & PULANG ---
-        return redirect()->back()->with('error', 'Anda sudah melakukan absen masuk dan pulang hari ini!');
+        return back()->with('error', 'Anda sudah melakukan presensi lengkap atau status Anda hari ini adalah ' . $kehadiranHariIni->status . '.');
     }
 }

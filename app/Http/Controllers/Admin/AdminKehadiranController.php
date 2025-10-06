@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminKehadiranController extends Controller
 {
+    /**
+     * Menampilkan daftar kehadiran dengan filter dan paginasi.
+     */
     public function index(Request $request)
     {
         $tahun = $request->get('tahun', now()->year);
@@ -22,9 +25,12 @@ class AdminKehadiranController extends Controller
             })
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
-            ->orderBy('tanggal', 'desc');
+            
+            // PERBAIKAN: Tambahkan urutan kedua berdasarkan waktu pembuatan
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc');
 
-        // PERUBAHAN 1: Menggunakan paginate() untuk membatasi 20 data per halaman
+        // Menggunakan paginate() untuk membatasi 20 data per halaman
         $kehadiran = $query->paginate(20)->withQueryString();
 
         // Query untuk data rekapitulasi
@@ -41,12 +47,15 @@ class AdminKehadiranController extends Controller
             ->with('pegawai.user')
             ->get();
         
-        // PERUBAHAN 2: Ganti nama variabel menjadi jamak ($pegawais)
+        // Data pegawai untuk dropdown Select2
         $pegawais = Pegawai::select('id', 'nama')->orderBy('nama')->get();
 
         return view('admin.kehadiran.index', compact('kehadiran', 'rekap', 'tahun', 'bulan', 'pegawais'));
     }
 
+    /**
+     * Menampilkan detail kehadiran per pegawai.
+     */
     public function show($pegawaiId, Request $request)
     {
         $tahun = $request->get('tahun', now()->year);
@@ -56,10 +65,14 @@ class AdminKehadiranController extends Controller
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc') // Tambahkan juga di sini untuk konsistensi
             ->get();
         return view('admin.kehadiran.show', compact('pegawai', 'kehadiran', 'tahun', 'bulan'));
     }
     
+    /**
+     * Mengunduh file bukti kehadiran (Izin/Sakit).
+     */
     public function downloadBukti($id)
     {
         $kehadiran = Kehadiran::findOrFail($id);

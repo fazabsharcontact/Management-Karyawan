@@ -29,28 +29,21 @@ class LaporanPerformaController extends Controller
 
     public function unduhPdf(Request $request)
     {
-        // --- PERBAIKAN: Tangkap semua variabel yang dikembalikan ---
-        list($pegawais, $chartData, $filter, $totals, $kehadiranDetails) = $this->fetchPerformanceData($request, false); // `false` untuk menonaktifkan paginasi di PDF
+        list($pegawais, $chartData, $filter, $totals, $kehadiranDetails) = $this->fetchPerformanceData($request, false);
 
-        // --- PERBAIKAN: Kirim semua data yang diperlukan ke view PDF ---
         $data = [
-            'pegawais' => $pegawais,
-            'filter' => $filter,
-            'chartData' => $chartData,
-            'totals' => $totals,
-            'kehadiranDetails' => $kehadiranDetails
+            'pegawais' => $pegawais, 'filter' => $filter, 'chartData' => $chartData,
+            'totals' => $totals, 'kehadiranDetails' => $kehadiranDetails
         ];
 
         $pdf = Pdf::loadView('admin.laporan.performa-pdf', $data)->setPaper('a4', 'landscape');
-        
         $namaFile = 'laporan-performa-' . Str::slug($filter['title']) . '.pdf';
-        
         return $pdf->download($namaFile);
     }
 
     private function fetchPerformanceData(Request $request, $paginateKehadiran = true)
     {
-        // ... (Logika filter periode dan hirarki tetap sama) ...
+        // Logika filter periode dan hirarki (tidak berubah)
         $periode = $request->input('periode', 'bulanan');
         $tanggalMulai = Carbon::now()->startOfMonth();
         $tanggalSelesai = Carbon::now()->endOfMonth();
@@ -88,25 +81,27 @@ class LaporanPerformaController extends Controller
             'kehadirans' => fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]),
             'tugasDiterima' => fn($q) => $q->whereBetween('created_at', [$tanggalMulai, $tanggalSelesai])
         ])->orderBy('nama')->get();
-
-        // --- PERBAIKAN: Paginasi opsional untuk detail kehadiran ---
+        
         $pegawaiIds = $pegawais->pluck('id');
         $kehadiranQuery = Kehadiran::with('pegawai')
             ->whereIn('pegawai_id', $pegawaiIds)
             ->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai])
-            ->latest('tanggal');
+            // --- PERBAIKAN 2: Urutkan dari data terbaru ---
+            ->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc');
 
         $kehadiranDetails = $paginateKehadiran ? $kehadiranQuery->paginate(15, ['*'], 'kehadiran_page') : $kehadiranQuery->get();
 
-
-        // (Kalkulasi metrik, totals, dan chartData tetap sama)
+        // Kalkulasi metrik
         $pegawais->each(function ($pegawai) {
             $pegawai->total_hadir = $pegawai->kehadirans->where('status', 'Hadir')->count();
             $pegawai->total_sakit_izin = $pegawai->kehadirans->whereIn('status', ['Sakit', 'Izin'])->count();
-            $totalHariKerja = $pegawai->kehadirans->count();
-            $jumlahTelat = $pegawai->kehadirans->where('status', 'Hadir')->where(fn($k) => is_null($k->jam_masuk) || $k->jam_masuk > '09:10:00')->count();
-            $pegawai->jumlah_telat = $jumlahTelat;
-            $pegawai->persentase_keterlambatan = ($pegawai->total_hadir > 0) ? round(($jumlahTelat / $pegawai->total_hadir) * 100) : 0;
+            
+            // --- PERBAIKAN 1: Logika keterlambatan diubah total ---
+            $pegawai->jumlah_telat = $pegawai->kehadirans->where('status', 'Terlambat')->count();
+            $totalHariMasukKerja = $pegawai->total_hadir + $pegawai->jumlah_telat;
+            $pegawai->persentase_keterlambatan = ($totalHariMasukKerja > 0) ? round(($pegawai->jumlah_telat / $totalHariMasukKerja) * 100) : 0;
+            // --- Akhir Perbaikan 1 ---
+
             $pegawai->total_tugas_diterima = $pegawai->tugasDiterima->count();
             $pegawai->total_tugas_selesai = $pegawai->tugasDiterima->where('status', 'Selesai')->count();
         });
@@ -124,7 +119,7 @@ class LaporanPerformaController extends Controller
             'labels' => $pegawais->pluck('nama'),
             'kehadiran' => $pegawais->pluck('total_hadir'),
             'pieTugas' => ['selesai' => $totals['total_tugas_selesai'], 'belum_selesai' => $totals['total_tugas_diterima'] - $totals['total_tugas_selesai']],
-            'pieKeterlambatan' => ['tepat_waktu' => $totals['total_hadir'] - $totals['total_telat'], 'telat' => $totals['total_telat']],
+            'pieKeterlambatan' => ['tepat_waktu' => $totals['total_hadir'], 'telat' => $totals['total_telat']],
             'rataRataWaktuKerja' => $pegawais->map(function ($pegawai) {
                 $avgMasuk = $pegawai->kehadirans->whereNotNull('jam_masuk')->avg(fn($k) => Carbon::parse($k->jam_masuk)->hour + Carbon::parse($k->jam_masuk)->minute / 60);
                 $avgPulang = $pegawai->kehadirans->whereNotNull('jam_pulang')->avg(fn($k) => Carbon::parse($k->jam_pulang)->hour + Carbon::parse($k->jam_pulang)->minute / 60);

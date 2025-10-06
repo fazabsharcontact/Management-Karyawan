@@ -16,14 +16,16 @@
                 <div class="mb-4 p-3 rounded bg-red-100 text-red-700">{{ session('error') }}</div>
             @endif
 
-            {{-- Filter --}}
-            <form method="GET" class="flex flex-wrap items-end gap-3 mb-6 pb-4 border-b">
+            {{-- ====================================================== --}}
+            {{--              PERBAIKAN DESAIN FILTER FORM              --}}
+            {{-- ====================================================== --}}
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end mb-6 pb-4 border-b">
                 {{-- Select2 untuk Pegawai --}}
-                <div class="flex-grow min-w-[250px]">
+                <div class="col-span-1 md:col-span-2 lg:col-span-2">
                     <label for="pegawai-select" class="block text-sm font-medium text-gray-700">Pegawai</label>
-                    <select name="pegawai_id" id="pegawai-select" class="mt-1 block w-full">
+                    {{-- Select2 akan otomatis menyesuaikan style dengan class ini --}}
+                    <select name="pegawai_id" id="pegawai-select" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         <option value="">Semua Pegawai</option>
-                        {{-- PERBAIKAN: Gunakan $pegawais --}}
                         @foreach ($pegawais as $p)
                             <option value="{{ $p->id }}" {{ request('pegawai_id') == $p->id ? 'selected' : '' }}>
                                 {{ $p->nama }}
@@ -33,9 +35,9 @@
                 </div>
 
                 {{-- Filter Bulan --}}
-                <div class="min-w-[150px]">
+                <div>
                      <label for="bulan" class="block text-sm font-medium text-gray-700">Bulan</label>
-                    <select name="bulan" id="bulan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <select name="bulan" id="bulan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         @foreach (['01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April', '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus', '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'] as $key => $val)
                             <option value="{{ $key }}" {{ request('bulan', now()->format('m')) == $key ? 'selected' : '' }}>{{ $val }}</option>
                         @endforeach
@@ -43,23 +45,28 @@
                 </div>
 
                 {{-- Filter Tahun --}}
-                <div class="min-w-[100px]">
+                <div>
                     <label for="tahun" class="block text-sm font-medium text-gray-700">Tahun</label>
-                    <select name="tahun" id="tahun" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <select name="tahun" id="tahun" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         @for ($i = now()->year; $i >= now()->year - 5; $i--)
                             <option value="{{ $i }}" {{ request('tahun', now()->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
                         @endfor
                     </select>
                 </div>
 
-                {{-- Tombol Filter --}}
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">
-                    Filter
-                </button>
+                {{-- Tombol Filter & Reset --}}
+                <div class="flex gap-2">
+                    <button type="submit" class="w-full text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">
+                        Filter
+                    </button>
+                     <a href="{{ route('admin.kehadiran.index') }}" class="w-full text-center bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">
+                        Reset
+                    </a>
+                </div>
             </form>
 
-            {{-- Tabel Rekapitulasi --}}
-             <div class="mb-6">
+            {{-- Tabel Rekapitulasi (tidak diubah) --}}
+            <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Rekapitulasi Kehadiran</h3>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
                     @php
@@ -77,7 +84,7 @@
                 </div>
             </div>
 
-            {{-- Tabel Kehadiran Detail --}}
+            {{-- Tabel Kehadiran Detail (tidak diubah) --}}
             <div class="overflow-x-auto">
                 <table class="min-w-full border border-gray-300 text-sm">
                     <thead class="bg-gray-100">
@@ -98,7 +105,7 @@
                                 <td class="px-4 py-2 border">{{ $row->jam_masuk ? \Carbon\Carbon::parse($row->jam_masuk)->format('H:i') : '-' }}</td>
                                 <td class="px-4 py-2 border">{{ $row->jam_pulang ? \Carbon\Carbon::parse($row->jam_pulang)->format('H:i') : '-' }}</td>
                                 <td class="px-4 py-2 border text-center">
-                                     <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold
                                         @if($row->status == 'Hadir') bg-green-100 text-green-800
                                         @elseif($row->status == 'Terlambat') bg-yellow-100 text-yellow-800
                                         @elseif($row->status == 'Sakit') bg-blue-100 text-blue-800
@@ -124,7 +131,6 @@
                 </table>
             </div>
             
-            {{-- Link Pagination --}}
             <div class="mt-4">
                 {{ $kehadiran->links() }}
             </div>
@@ -135,11 +141,10 @@
     @push('scripts')
     <script>
         $(document).ready(function() {
-            // Inisialisasi Select2 pada dropdown pegawai
             $('#pegawai-select').select2({
                 placeholder: "Cari atau pilih pegawai",
                 allowClear: true,
-                width: 'resolve' // Otomatis menyesuaikan lebar
+                width: '100%' // Set lebar 100% agar responsif
             });
         });
     </script>

@@ -19,6 +19,7 @@ class Kehadiran extends Model
         'jam_pulang',
         'status',
         'keterangan',
+        'bukti',
     ];
 
     /**
