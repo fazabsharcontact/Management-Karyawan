@@ -51,6 +51,19 @@ class CutiController extends Controller
         }
         if ($newStatus === 'Disetujui') {
             // ... (Kode pengurangan sisa cuti Anda) ...
+             if ($newStatus === 'Disetujui') {
+                $durasiCuti = $cuti->durasi_hari_kerja;
+                
+                $sisaCutiPegawai = SisaCuti::firstOrCreate(
+                    ['pegawai_id' => $cuti->pegawai_id]
+                );
+
+                if ($sisaCutiPegawai->sisa_cuti < $durasiCuti) {
+                    return back()->with('error', 'Gagal menyetujui: Sisa cuti pegawai tidak mencukupi.');
+                }
+
+                $sisaCutiPegawai->decrement('sisa_cuti', $durasiCuti);
+            }
 
             // ------------------------------------------------
             // 2. LOGIKA INTEGRASI KE HADIRAN
