@@ -25,7 +25,7 @@ class AdminKehadiranController extends Controller
             })
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
-            
+
             // PERBAIKAN: Tambahkan urutan kedua berdasarkan waktu pembuatan
             ->orderBy('tanggal', 'desc')
             ->orderBy('created_at', 'desc');
@@ -39,14 +39,15 @@ class AdminKehadiranController extends Controller
                 SUM(CASE WHEN status="Absen" THEN 1 ELSE 0 END) as total_absen,
                 SUM(CASE WHEN status="Sakit" THEN 1 ELSE 0 END) as total_sakit,
                 SUM(CASE WHEN status="Izin" THEN 1 ELSE 0 END) as total_izin,
-                SUM(CASE WHEN status="Terlambat" THEN 1 ELSE 0 END) as total_terlambat')
+                SUM(CASE WHEN status="Terlambat" THEN 1 ELSE 0 END) as total_terlambat,
+                SUM(CASE WHEN status="Cuti" THEN 1 ELSE 0 END) as total_cuti')
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->when($request->pegawai_id, fn($q) => $q->where('pegawai_id', $request->pegawai_id)) // Filter rekap juga
             ->groupBy('pegawai_id')
             ->with('pegawai.user')
             ->get();
-        
+
         // Data pegawai untuk dropdown Select2
         $pegawais = Pegawai::select('id', 'nama')->orderBy('nama')->get();
 
@@ -69,7 +70,7 @@ class AdminKehadiranController extends Controller
             ->get();
         return view('admin.kehadiran.show', compact('pegawai', 'kehadiran', 'tahun', 'bulan'));
     }
-    
+
     /**
      * Mengunduh file bukti kehadiran (Izin/Sakit).
      */

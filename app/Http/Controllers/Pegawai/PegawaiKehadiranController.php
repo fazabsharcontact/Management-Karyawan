@@ -49,6 +49,11 @@ class PegawaiKehadiranController extends Controller
             ->whereDate('tanggal', $tanggal->toDateString())
             ->first();
 
+        // === TAMBAHKAN PENGECEKAN CUTI DI SINI ===
+        if ($kehadiranHariIni && $kehadiranHariIni->status === 'Cuti') {
+            return back()->with('warning', 'Anda sedang Cuti yang disetujui pada hari ini. Anda tidak perlu melakukan presensi.');
+        }
+
         if (!$kehadiranHariIni) {
             $status = $request->input('status');
 
@@ -61,7 +66,7 @@ class PegawaiKehadiranController extends Controller
                     return back()->with('error', "Waktu presensi masuk hanya antara 08:50 - 13:00 WIB.");
                 }
                 $statusKehadiran = $now->lte($endHadir) ? 'Hadir' : 'Terlambat';
-                
+
                 Kehadiran::create([
                     'pegawai_id' => $pegawai->id,
                     'tanggal' => $tanggal->toDateString(),
@@ -70,10 +75,10 @@ class PegawaiKehadiranController extends Controller
                 ]);
                 return back()->with('success', 'Presensi masuk berhasil dicatat! Status: ' . $statusKehadiran);
             }
-            
+
             if (in_array($status, ['Izin', 'Sakit'])) {
-                 $request->validate(['bukti' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048']);
-                
+                $request->validate(['bukti' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048']);
+
                 $buktiPath = null;
                 if ($request->hasFile('bukti')) {
                     $buktiPath = $request->file('bukti')->store('bukti_kehadiran', 'public');
