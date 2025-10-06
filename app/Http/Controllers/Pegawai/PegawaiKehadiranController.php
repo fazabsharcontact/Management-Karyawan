@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class PegawaiKehadiranController extends Controller
 {
-    /**
-     * Menampilkan halaman riwayat kehadiran pegawai.
-     */
     public function index(Request $request)
     {
         $pegawai = Auth::user()->pegawai;
@@ -28,15 +25,12 @@ class PegawaiKehadiranController extends Controller
             ->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan)
             ->orderByDesc('tanggal')
-            ->paginate(10) // Paginasi 10 data per halaman
+            ->paginate(10)
             ->withQueryString();
 
         return view('pegawai.kehadiran.index', compact('kehadiran', 'tahun', 'bulan'));
     }
 
-    /**
-     * Memproses presensi (masuk, pulang, izin, atau sakit).
-     */
     public function store(Request $request)
     {
         $pegawai = Auth::user()->pegawai;
@@ -47,11 +41,14 @@ class PegawaiKehadiranController extends Controller
         $tanggal = Carbon::today('Asia/Jakarta');
         $now = Carbon::now('Asia/Jakarta');
 
+        if ($now->isWeekend()) {
+            return back()->with('error', 'Tidak dapat melakukan presensi pada hari Sabtu atau Minggu.');
+        }
+
         $kehadiranHariIni = Kehadiran::where('pegawai_id', $pegawai->id)
             ->whereDate('tanggal', $tanggal->toDateString())
             ->first();
 
-        // --- 1. JIKA BELUM ADA PRESENSI SAMA SEKALI HARI INI ---
         if (!$kehadiranHariIni) {
             $status = $request->input('status');
 
@@ -94,7 +91,6 @@ class PegawaiKehadiranController extends Controller
             return back()->with('error', 'Aksi tidak valid.');
         }
 
-        // --- 2. JIKA SUDAH PRESENSI MASUK, PROSES PRESENSI PULANG ---
         if (in_array($kehadiranHariIni->status, ['Hadir', 'Terlambat']) && !$kehadiranHariIni->jam_pulang) {
             $kehadiranHariIni->update(['jam_pulang' => $now->toTimeString()]);
             return back()->with('success', 'Presensi pulang berhasil dicatat!');

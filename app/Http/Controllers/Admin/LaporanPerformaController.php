@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Controllers\Controller;
 use App\Models\Divisi;
 use App\Models\Pegawai;
@@ -43,7 +41,6 @@ class LaporanPerformaController extends Controller
 
     private function fetchPerformanceData(Request $request, $paginateKehadiran = true)
     {
-        // Logika filter periode dan hirarki (tidak berubah)
         $periode = $request->input('periode', 'bulanan');
         $tanggalMulai = Carbon::now()->startOfMonth();
         $tanggalSelesai = Carbon::now()->endOfMonth();
@@ -78,30 +75,25 @@ class LaporanPerformaController extends Controller
         }
 
         $pegawais = $query->with([
-            'kehadirans' => fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]),
-            'tugasDiterima' => fn($q) => $q->whereBetween('created_at', [$tanggalMulai, $tanggalSelesai])
+            'kehadirans' => fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai])->whereRaw('DAYOFWEEK(tanggal) BETWEEN 2 AND 6'),
+            'tugasDiterima' => fn($q) => $q->whereBetween('created_at', [$tanggalMulai, $tanggalSelesai])->whereRaw('DAYOFWEEK(created_at) BETWEEN 2 AND 6'),
         ])->orderBy('nama')->get();
         
         $pegawaiIds = $pegawais->pluck('id');
         $kehadiranQuery = Kehadiran::with('pegawai')
             ->whereIn('pegawai_id', $pegawaiIds)
             ->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai])
-            // --- PERBAIKAN 2: Urutkan dari data terbaru ---
+            ->whereRaw('DAYOFWEEK(tanggal) BETWEEN 2 AND 6')
             ->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc');
 
         $kehadiranDetails = $paginateKehadiran ? $kehadiranQuery->paginate(15, ['*'], 'kehadiran_page') : $kehadiranQuery->get();
 
-        // Kalkulasi metrik
         $pegawais->each(function ($pegawai) {
             $pegawai->total_hadir = $pegawai->kehadirans->where('status', 'Hadir')->count();
             $pegawai->total_sakit_izin = $pegawai->kehadirans->whereIn('status', ['Sakit', 'Izin'])->count();
-            
-            // --- PERBAIKAN 1: Logika keterlambatan diubah total ---
             $pegawai->jumlah_telat = $pegawai->kehadirans->where('status', 'Terlambat')->count();
             $totalHariMasukKerja = $pegawai->total_hadir + $pegawai->jumlah_telat;
             $pegawai->persentase_keterlambatan = ($totalHariMasukKerja > 0) ? round(($pegawai->jumlah_telat / $totalHariMasukKerja) * 100) : 0;
-            // --- Akhir Perbaikan 1 ---
-
             $pegawai->total_tugas_diterima = $pegawai->tugasDiterima->count();
             $pegawai->total_tugas_selesai = $pegawai->tugasDiterima->where('status', 'Selesai')->count();
         });

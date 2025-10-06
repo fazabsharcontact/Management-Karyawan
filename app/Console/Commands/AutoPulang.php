@@ -9,29 +9,37 @@ use Carbon\Carbon;
 class AutoPulang extends Command
 {
     protected $signature = 'kehadiran:auto-pulang';
-    protected $description = 'Set jam pulang otomatis jam 19:00 untuk yang belum absen pulang.';
+    protected $description = 'Set jam pulang otomatis jam 19:00 untuk yang belum presensi pulang.';
 
     public function handle()
     {
-        $tanggal = Carbon::today('Asia/Jakarta')->toDateString();
-        $waktuAutoPulang = '19:00:00';
+        $today = Carbon::today('Asia/Jakarta');
 
-        // Cari record yang statusnya Hadir/Terlambat, sudah punya jam_masuk, tapi jam_pulang masih NULL
-        $kehadiranBelumPulang = Kehadiran::whereDate('tanggal', $tanggal)
-            ->whereIn('status', ['Hadir', 'Terlambat'])
-            ->whereNotNull('jam_masuk')
-            ->whereNull('jam_pulang')
-            ->get();
-
-        $count = 0;
-        foreach ($kehadiranBelumPulang as $kehadiran) {
-            $kehadiran->update([
-                'jam_pulang' => $waktuAutoPulang,
-            ]);
-            $count++;
+        // Jangan jalankan di akhir pekan
+        if ($today->isWeekend()) {
+            $this->info('Hari ini akhir pekan, tidak ada proses auto-pulang.');
+            return 0;
         }
 
-        $this->info("Berhasil mencatat pulang otomatis jam 19:00 untuk {$count} pegawai.");
+        $waktuAutoPulang = '19:00:00';
+
+        // Query untuk mencari record yang akan diupdate
+        $query = Kehadiran::whereDate('tanggal', $today->toDateString())
+            ->whereIn('status', ['Hadir', 'Terlambat'])
+            ->whereNotNull('jam_masuk')
+            ->whereNull('jam_pulang');
+
+        // Hitung jumlah record yang akan diupdate SEBELUM melakukan update
+        $count = $query->count();
+
+        if ($count > 0) {
+            // Lakukan update massal dalam satu perintah
+            $query->update(['jam_pulang' => $waktuAutoPulang]);
+            $this->info("Berhasil mencatat pulang otomatis jam 19:00 untuk {$count} pegawai.");
+        } else {
+            $this->info("Tidak ada pegawai yang perlu diupdate jam pulangnya hari ini.");
+        }
+
         return 0;
     }
 }

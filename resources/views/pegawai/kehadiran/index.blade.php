@@ -9,7 +9,6 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
 
-                {{-- Alert --}}
                 @if (session('success'))
                     <div class="mb-6 p-4 rounded-md bg-green-50 text-green-700 border border-green-200 flex items-start">
                         <svg class="w-5 h-5 mr-3 mt-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
@@ -29,6 +28,7 @@
                     $absensiHariIni = $kehadiran->firstWhere('tanggal', $today->toDateString());
                     $startPulang = $today->copy()->addHours(17);
                     $isBeforePulangTime = $now->lt($startPulang);
+                    $isWeekend = $now->isWeekend();
                 @endphp
 
                 <div class="mb-8 p-6 rounded-lg bg-gray-50 border border-gray-200">
@@ -43,7 +43,12 @@
                         </div>
                     </div>
 
-                    @if (!$absensiHariIni)
+                    @if ($isWeekend)
+                        <div class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-bold text-blue-800">Selamat Berakhir Pekan!</h4>
+                            <p class="text-sm text-blue-700 mt-2">Tidak ada presensi yang perlu dilakukan hari ini. Nikmati waktu istirahat Anda.</p>
+                        </div>
+                    @elseif (!$absensiHariIni)
                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="p-4 bg-blue-50 rounded-lg border border-blue-200 text-center flex flex-col justify-between">
                                 <h4 class="font-semibold text-blue-800">Presensi Masuk</h4>
@@ -215,7 +220,6 @@
     
     @push('scripts')
     <script>
-        // Fungsi untuk Modal Izin/Sakit
         function openIzinModal(status) {
             document.getElementById('modal-status').value = status;
             document.getElementById('modal-title').innerText = 'Pengajuan ' + status;
@@ -228,7 +232,6 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Jam Real-time
             const clockElement = document.getElementById('realtime-clock');
             if (clockElement) {
                 setInterval(() => {
@@ -238,18 +241,15 @@
                 }, 1000);
             }
 
-            // --- LOGIKA UNTUK SEMUA MODAL ---
             const izinSakitModal = document.getElementById('izinSakitModal');
             const cancelIzinModalButton = document.getElementById('cancel-izin-modal-button');
             const pulangForm = document.getElementById('pulang-form');
             const earlyClockoutModal = document.getElementById('early-clockout-modal');
 
-            // Logika Modal Izin/Sakit
             if (cancelIzinModalButton) {
                 cancelIzinModalButton.addEventListener('click', closeIzinModal);
             }
 
-            // Logika Modal Pulang Awal
             if (pulangForm) {
                 const isEarly = {{ $isBeforePulangTime ? 'true' : 'false' }};
                 const confirmEarlyBtn = document.getElementById('confirm-early-button');
@@ -273,11 +273,9 @@
                 }
             }
             
-            // Logika Tutup Modal Saat Klik Area Luar
             window.addEventListener('click', (event) => {
                 if (event.target === izinSakitModal) closeIzinModal();
                 if (event.target === earlyClockoutModal) {
-                    // Pastikan earlyClockoutModal didefinisikan sebelum digunakan
                     const closeEarlyClockoutModal = () => earlyClockoutModal.classList.add('hidden');
                     closeEarlyClockoutModal();
                 }

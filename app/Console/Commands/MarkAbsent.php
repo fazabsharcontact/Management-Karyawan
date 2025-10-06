@@ -7,45 +7,49 @@ use App\Models\Pegawai;
 use App\Models\Kehadiran;
 use Carbon\Carbon;
 
-class MarkAbsent extends Command
+// --- PERBAIKAN: Nama class disamakan dengan nama file ---
+class MarkAsAbsent extends Command
 {
-    // Ubah deskripsi
     protected $signature = 'kehadiran:mark-absent';
-    protected $description = 'Tandai pegawai yang belum absen sebagai Absen setelah jam 13:00 WIB.';
+    protected $description = 'Tandai pegawai yang belum presensi sebagai Absen setelah jam 13:00 WIB.';
 
     public function handle()
     {
-        $tanggal = Carbon::today('Asia/Jakarta')->toDateString();
-        $now = Carbon::now('Asia/Jakarta');
+        $today = Carbon::today('Asia/Jakarta');
 
-        // Batas akhir Izin/Sakit/Absen = 13:00
-        $batasWaktu = Carbon::createFromTime(13, 0, 0, 'Asia/Jakarta');
-
-        if ($now->lessThanOrEqualTo($batasWaktu)) {
-            $this->info('Belum waktunya menjalankan MarkAbsent (batas waktu 13:00).');
+        // Jangan jalankan perintah ini di akhir pekan
+        if ($today->isWeekend()) {
+            $this->info('Hari ini akhir pekan, tidak ada pengecekan absen.');
             return 0;
         }
 
-        // Ambil semua pegawai
-        $pegawaiList = Pegawai::all();
+        // 1. Ambil semua ID pegawai yang seharusnya masuk kerja
+        $pegawaiIds = Pegawai::pluck('id');
 
-        foreach ($pegawaiList as $pegawai) {
-            $kehadiran = Kehadiran::where('pegawai_id', $pegawai->id)
-                ->whereDate('tanggal', $tanggal)
-                ->first();
+        // 2. Ambil semua ID pegawai yang SUDAH memiliki record kehadiran hari ini
+        $pegawaiSudahPresensiIds = Kehadiran::where('tanggal', $today->toDateString())
+                                     ->pluck('pegawai_id');
 
-            // Cek jika belum ada record sama sekali
-            if (!$kehadiran) {
-                Kehadiran::create([
-                    'pegawai_id' => $pegawai->id,
-                    'tanggal'  => $tanggal,
-                    'status'   => 'Absen',
-                ]);
-
-                $this->info("Pegawai {$pegawai->nama} ditandai Absen otomatis.");
-            }
+        // 3. Cari ID pegawai yang BELUM presensi
+        $pegawaiBelumPresensiIds = $pegawaiIds->diff($pegawaiSudahPresensiIds);
+        
+        if ($pegawaiBelumPresensiIds->isEmpty()) {
+            $this->info('Semua pegawai sudah melakukan presensi hari ini.');
+            return 0;
         }
 
+        $this->info("Menemukan {$pegawaiBelumPresensiIds->count()} pegawai yang belum presensi. Menandai sebagai Absen...");
+        
+        // 4. Buat record 'Absen' untuk setiap pegawai yang belum presensi
+        foreach ($pegawaiBelumPresensiIds as $pegawaiId) {
+            Kehadiran::create([
+                'pegawai_id' => $pegawaiId,
+                'tanggal'    => $today->toDateString(),
+                'status'     => 'Absen',
+            ]);
+        }
+
+        $this->info('Selesai! Semua pegawai yang tidak hadir telah ditandai.');
         return 0;
     }
 }
