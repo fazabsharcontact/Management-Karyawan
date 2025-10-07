@@ -35,7 +35,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <div>
                             <h3 class="text-lg font-bold text-gray-800">Presensi Hari Ini</h3>
-                            <p class="text-sm text-gray-500">{{ $now->isoFormat('dddd, D MMMM Y') }}</p>
+                            <p class="text-sm text-gray-500">{{ $now->locale('id')->isoFormat('dddd, D MMMM Y') }}</p>
                         </div>
                         <div class="text-right">
                              <p id="realtime-clock" class="text-2xl font-mono font-bold text-gray-700">{{ $now->format('H:i:s') }}</p>
@@ -115,7 +115,6 @@
                     @endif
                 </div>
 
-                {{-- Modal Izin/Sakit --}}
                 <div id="izinSakitModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
                      <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
                         <div class="mt-3">
@@ -143,7 +142,6 @@
                     </div>
                 </div>
 
-                {{-- Modal Konfirmasi Pulang Awal --}}
                 <div id="early-clockout-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
                     <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
                         <div class="mt-3">
@@ -169,7 +167,7 @@
                 <div class="mt-8">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold text-gray-800">Riwayat Presensi</h3>
-                         <form method="GET" class="flex flex-wrap gap-3">
+                         <form method="GET" action="{{ route('pegawai.kehadiran.index') }}" class="flex flex-wrap gap-3">
                             <select name="bulan" class="border-gray-300 rounded-md shadow-sm w-full md:w-auto text-sm">
                                 @foreach (['01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April', '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus', '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'] as $key => $val)
                                     <option value="{{ $key }}" {{ $bulan == $key ? 'selected' : '' }}>{{ $val }}</option>
@@ -196,7 +194,7 @@
                             <tbody class="divide-y divide-gray-200">
                                 @forelse($kehadiran as $row)
                                     <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 whitespace-nowrap">{{ \Carbon\Carbon::parse($row->tanggal)->isoFormat('dddd, D MMMM Y') }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap">{{ \Carbon\Carbon::parse($row->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y') }}</td>
                                         <td class="px-4 py-3 text-center">
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                                                 @if($row->status == 'Hadir') bg-green-100 text-green-800 @elseif($row->status == 'Terlambat') bg-yellow-100 text-yellow-800 @elseif($row->status == 'Sakit') bg-blue-100 text-blue-800 @elseif($row->status == 'Izin') bg-indigo-100 text-indigo-800 @else bg-red-100 text-red-800 @endif">
