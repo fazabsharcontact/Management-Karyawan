@@ -13,7 +13,7 @@ class TugasPengumpulanController extends Controller
     public function store(Request $request, $tugasId)
     {
         $request->validate([
-            'file' => 'required|file|mimes:pdf,docx,xlsx,zip|max:2048',
+            'file' => 'required|file|mimes:pdf,docx,xlsx,zip|max:25480',
             'catatan' => 'nullable|string',
         ]);
 
@@ -36,7 +36,7 @@ class TugasPengumpulanController extends Controller
         TugasPengumpulan::create([
             'tugas_id' => $tugasId,
             'pegawai_id' => $pegawai->id,
-            'file' => $storagePath . '/' . $originalFilename, // Pastikan format path sesuai
+            'file' => $storagePath . '/' . $originalFilename, 
             'catatan' => $request->catatan,
             'status' => 'pending',
         ]);
