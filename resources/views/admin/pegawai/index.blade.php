@@ -1,102 +1,113 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Manajemen Data Pegawai
-        </h2>
-    </x-slot>
+    <div class="p-12 bg-white">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <h2 class="font-bold text-3xl text-gray-900 leading-tight">
+                Manajemen Data Pegawai
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">Kelola data pegawai dengan mudah dan efisien</p>
 
-    <div class="p-6">
-        {{-- Area Filter --}}
-        <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-4 mb-6">
-            <form method="GET" action="{{ route('admin.pegawai.index') }}" class="flex flex-col md:flex-row gap-3">
-                <input type="text" name="search" placeholder="Cari nama pegawai..." 
-                       class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200"
-                       value="{{ request('search') }}">
-                
-                <select name="jabatan" 
-                        class="border border-gray-300 rounded-lg p-2 w-full md:w-1/3 focus:ring focus:ring-blue-200">
-                    <option value="">Semua Jabatan</option>
-                    @foreach($jabatans as $j)
-                        <option value="{{ $j->nama_jabatan }}" 
-                                {{ request('jabatan') == $j->nama_jabatan ? 'selected' : '' }}>
-                            {{ $j->nama_jabatan }}
-                        </option>
-                    @endforeach
-                </select>
+            {{-- Filter Section --}}
+            <div class="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl shadow-sm p-5 mb-8">
+                <form method="GET" action="{{ route('admin.pegawai.index') }}" class="flex flex-col md:flex-row gap-3 items-center">
+                    <input type="text" name="search" placeholder="🔍 Cari nama pegawai..." 
+                        class="border border-gray-300 rounded-xl p-2.5 w-full md:w-1/3 text-gray-700 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                        value="{{ request('search') }}">
+                    
+                    <select name="jabatan" 
+                            class="border border-gray-300 rounded-xl p-2.5 w-full md:w-1/3 text-gray-700 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                        <option value="">Semua Jabatan</option>
+                        @foreach($jabatans as $j)
+                            <option value="{{ $j->nama_jabatan }}" 
+                                    {{ request('jabatan') == $j->nama_jabatan ? 'selected' : '' }}>
+                                {{ $j->nama_jabatan }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                <button type="submit" 
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
-                    Filter
-                </button>
-                 <a href="{{ route('admin.pegawai.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow text-center">
-                    Reset
-                </a>
-            </form>
-        </div>
-
-        {{-- Tabel Data --}}
-        <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
-            <div class="mb-4">
-                <a href="{{ route('admin.pegawai.create') }}" 
-                   class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
-                    + Tambah Pegawai
-                </a>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button type="submit" 
+                                class="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-sm">
+                            Filter
+                        </button>
+                        <a href="{{ route('admin.pegawai.index') }}" 
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-sm text-center">
+                            Reset
+                        </a>
+                    </div>
+                </form>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Nama</th>
-                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Jabatan</th>
-                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Tim / Divisi</th>
-                            <th class="border-b px-4 py-2 text-left text-sm font-medium text-gray-600">Gaji Pokok</th>
-                            <th class="border-b px-4 py-2 text-center text-sm font-medium text-gray-600">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($pegawais as $p)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="border-b px-4 py-2 text-gray-800">{{ $p->nama }}</td>
-                            <td class="border-b px-4 py-2 text-gray-800">{{ $p->jabatan->nama_jabatan ?? 'N/A' }}</td>
-                            <td class="border-b px-4 py-2 text-gray-800">
-                                @if ($p->tim)
-                                    {{ $p->tim->nama_tim }}
-                                    <span class="text-xs text-gray-500 block">{{ $p->tim->divisi->nama_divisi ?? 'N/A' }}</span>
-                                @else
-                                    <span class="text-gray-400 italic">-</span>
-                                @endif
-                            </td>
-                            <td class="border-b px-4 py-2 text-gray-800">Rp {{ number_format($p->gaji_pokok, 0, ',', '.') }}</td>
-                            <td class="border-b px-4 py-2 text-center">
-                                <div class="flex justify-center gap-2">
-                                    <a href="{{ route('admin.pegawai.edit', $p->id) }}" 
-                                       class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm shadow">Edit</a>
-                                    
-                                    <form action="{{ route('admin.pegawai.destroy', $p->id) }}" method="POST" class="delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                data-nama="{{ $p->nama }}"
-                                                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm shadow">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">Tidak ada data pegawai yang ditemukan.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+            {{-- Data Table --}}
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-lg font-semibold text-gray-900">Daftar Pegawai</h3>
+                    <a href="{{ route('admin.pegawai.create') }}" 
+                    class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow">
+                        + Tambah Pegawai
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full border-collapse">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-sm">
+                            <tr>
+                                <th class="border-b px-4 py-3 text-left">Nama</th>
+                                <th class="border-b px-4 py-3 text-left">Jabatan</th>
+                                <th class="border-b px-4 py-3 text-left">Tim / Divisi</th>
+                                <th class="border-b px-4 py-3 text-left">Gaji Pokok</th>
+                                <th class="border-b px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($pegawais as $p)
+                            <tr class="hover:bg-gray-50 transition-all">
+                                <td class="px-4 py-3 text-gray-900 font-medium">{{ $p->nama }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $p->jabatan->nama_jabatan ?? 'N/A' }}</td>
+                                <td class="px-4 py-3 text-gray-700">
+                                    @if ($p->tim)
+                                        {{ $p->tim->nama_tim }}
+                                        <span class="text-xs text-gray-500 block">{{ $p->tim->divisi->nama_divisi ?? 'N/A' }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-gray-800 font-semibold">Rp {{ number_format($p->gaji_pokok, 0, ',', '.') }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex justify-center gap-2">
+                                        <a href="{{ route('admin.pegawai.edit', $p->id) }}" 
+                                        class="bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded-lg text-sm transition-all duration-200">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('admin.pegawai.destroy', $p->id) }}" method="POST" class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    data-nama="{{ $p->nama }}"
+                                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm shadow">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-gray-500 italic">
+                                    Tidak ada data pegawai yang ditemukan.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
             </div>
-            <div class="mt-4">{{ $pegawais->appends(request()->query())->links() }}</div>
+            </div>
+
+            <div class="mt-5">
+                {{ $pegawais->appends(request()->query())->links() }}
+            </div>
         </div>
     </div>
 
-    {{-- Modal Konfirmasi Hapus --}}
     <div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
             <div class="mt-3">

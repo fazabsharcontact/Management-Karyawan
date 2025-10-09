@@ -199,7 +199,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="company-name">PT. Manajemen Karyawan Sejahtera</div>
+            <div class="company-name">Worktify Company</div>
             <div class="slip-title">Slip Gaji</div>
         </div>
 

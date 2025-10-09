@@ -1,17 +1,19 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            ➕ Tambah Pegawai
-        </h2>
-    </x-slot>
+    <div class="min-h-screen bg-white p-10">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Header -->
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900">➕ Tambah Pegawai</h1>
+                <p class="text-gray-500 text-sm mt-1">
+                    Isi data pegawai dengan lengkap untuk menambah pegawai baru ke dalam sistem.
+                </p>
+            </div>
 
-    <div class="py-6">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg p-6">
-
+            <!-- Form Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                 @if($errors->any())
-                    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded">
-                        <ul class="list-disc pl-5">
+                    <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+                        <ul class="list-disc pl-5 space-y-1">
                             @foreach($errors->all() as $err)
                                 <li>{{ $err }}</li>
                             @endforeach
@@ -19,22 +21,22 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.pegawai.store') }}" method="POST">
+                <form action="{{ route('admin.pegawai.store') }}" method="POST" class="space-y-6">
                     @csrf
                     @include('admin.pegawai._form', ['pegawai' => new \App\Models\Pegawai()])
 
-                    <div class="mt-4 flex gap-2">
-                        <button type="submit" 
-                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    <!-- Tombol -->
+                    <div class="flex items-center justify-end gap-3 pt-4">
+                        <a href="{{ route('admin.pegawai.index') }}"
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium">
+                            Batal
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg text-sm font-medium">
                             Simpan
                         </button>
-                        <a href="{{ route('admin.pegawai.index') }}" 
-                           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-                            Kembali
-                        </a>
                     </div>
                 </form>
-
             </div>
         </div>
     </div>

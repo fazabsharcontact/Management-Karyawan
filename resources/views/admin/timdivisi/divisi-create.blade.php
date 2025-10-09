@@ -1,21 +1,45 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">+ Tambah Divisi Baru</h2>
-    </x-slot>
+    <div class="py-6">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm sm:rounded-lg border border-gray-200">
+                <div class="p-6">
 
-    <div class="p-6">
-        <div class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto">
-            <form method="POST" action="{{ route('admin.divisi.store') }}" class="space-y-4">
-                @csrf
-                <div>
-                    <label for="nama_divisi" class="block font-medium text-sm text-gray-700">Nama Divisi</label>
-                    <input type="text" name="nama_divisi" id="nama_divisi" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('nama_divisi') }}" required autofocus>
+                    <div class="mb-6 border-b pb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Tambah Divisi
+                        </h2>
+                        <p class="text-gray-500 mt-1 text-sm">
+                            Isi data divisi baru yang akan ditambahkan ke dalam sistem.
+                        </p>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.divisi.store') }}" class="space-y-5">
+                        @csrf
+
+                        <div>
+                            <label for="nama_divisi" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Divisi
+                            </label>
+                            <input type="text" name="nama_divisi" id="nama_divisi"
+                                value="{{ old('nama_divisi') }}"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition"
+                                placeholder="Contoh: Divisi Produksi" required autofocus>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <a href="{{ route('admin.tim-divisi.index') }}"
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg border border-gray-300 transition">
+                                Batal
+                            </a>
+                            <button type="submit"
+                                class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow transition">
+                                Simpan
+                            </button>
+                        </div>
+                    </form>
+
                 </div>
-                <div class="flex items-center gap-4">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">Simpan</button>
-                    <a href="{{ route('admin.tim-divisi.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </x-app-layout>

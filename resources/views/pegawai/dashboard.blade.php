@@ -1,93 +1,150 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard Pegawai') }}
-        </h2>
-    </x-slot>
+    <div class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-10">
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8">
+            <!-- === HEADER === -->
+            <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+                <div>
+                    <h2 class="font-bold text-3xl text-gray-900 leading-tight">
+                        Dashboard Pegawai
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Selamat datang kembali, <span class="font-semibold text-gray-900">{{ $pegawai->nama }}</span> 
+                    </p>
+                </div>
+                <div class="flex items-center bg-gray-100 px-4 py-2 rounded-lg shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-700 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h18M9 3v18m6-18v18M4.5 6h15m-15 4.5h15m-15 4.5h15m-15 4.5h15"/>
+                    </svg>
+                    <span class="text-gray-700 text-sm font-medium">{{ now()->translatedFormat('l, d F Y') }}</span>
+                </div>
+            </div>
 
-                <h1 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">
-                    Halo, {{ $pegawai->nama }}! 👋
-                </h1>
+            <!-- === GRID STATISTIK === -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                @php
+                    $stats = [
+                        ['title' => 'Gaji Tahun Ini', 'value' => 'Rp ' . number_format($totalGajiTahun, 0, ',', '.'), 'color' => 'green', 'icon' => 'currency-dollar'],
+                        ['title' => 'Total Hadir', 'value' => $totalHariMasuk . ' hari', 'color' => 'blue', 'icon' => 'check-circle'],
+                        ['title' => 'Total Terlambat', 'value' => $totalTerlambat . ' kali', 'color' => 'black', 'icon' => 'clock'],
+                        ['title' => 'Total Izin', 'value' => $totalIzin . ' hari', 'color' => 'yellow', 'icon' => 'calendar'],
+                        ['title' => 'Total Sakit', 'value' => $totalSakit . ' hari', 'color' => 'red', 'icon' => 'heart'],
+                        ['title' => 'Total Absen', 'value' => $totalAbsen . ' hari', 'color' => 'gray', 'icon' => 'x-circle'],
+                    ];
+                @endphp
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
-
-                    {{-- Statistik Gaji Tahunan (Highlight) --}}
-                    <div
-                        class="flex items-center p-4 bg-white border border-green-200 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-[1.02]">
-                        <div class="flex-shrink-0 p-3 bg-green-500 rounded-full text-white">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
-                                </path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-500">Gaji Tahun Ini</p>
-                            <p class="text-lg font-bold text-green-700">Rp
-                                {{ number_format($totalGajiTahun, 0, ',', '.') }}</p>
+                @foreach ($stats as $stat)
+                    <div class="bg-gray-50 border border-gray-100 rounded-2xl shadow-sm p-5 hover:shadow-md transition-all duration-300">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-{{ $stat['color'] }}-100 text-{{ $stat['color'] }}-600 shadow-inner">
+                                @switch($stat['icon'])
+                                    @case('currency-dollar')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-10v12"/>
+                                        </svg>
+                                        @break
+                                    @case('check-circle')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        @break
+                                    @case('clock')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        @break
+                                    @case('calendar')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        @break
+                                    @case('heart')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-8.682a4.5 4.5 0 010-6.364z"/>
+                                        </svg>
+                                        @break
+                                    @case('x-circle')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        @break
+                                @endswitch
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-semibold">{{ $stat['title'] }}</p>
+                                <p class="text-xl font-bold text-gray-900 mt-1">{{ $stat['value'] }}</p>
+                            </div>
                         </div>
                     </div>
+                @endforeach
+            </div>
 
-                    {{-- Statistik Kehadiran Bulanan --}}
-                    <x-statistic-card color="blue" title="Total Hadir" value="{{ $totalHariMasuk }} hari"
-                        icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <x-statistic-card color="black" title="Total Terlambat" value="{{ $totalTerlambat }} kali"
-                        icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <x-statistic-card color="yellow" title="Total Izin" value="{{ $totalIzin }} hari"
-                        icon="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <x-statistic-card color="red" title="Total Sakit" value="{{ $totalSakit }} hari"
-                        icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M12 10.5v.5m0-4v.5" />
-                    <x-statistic-card color="gray" title="Total Absen" value="{{ $totalAbsen }} hari"
-                        icon="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636" />
-
-                </div>
-
-                <h2 class="text-2xl font-bold text-gray-800 mt-4 mb-4 border-b pb-2">Visualisasi Data</h2>
+            <!-- === VISUALISASI DATA === -->
+            <div class="mt-10">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">Visualisasi Data</h3>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                    {{-- Grafik Kehadiran (1 Kolom) --}}
-                    <div class="p-6 lg:col-span-1">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Ringkasan Kehadiran (Bulan
-                            {{ $bulanSekarang }})</h3>
-                        <div class="w-full h-96 flex items-center justify-center">
+                    <!-- Grafik Kehadiran -->
+                    <div class="bg-gray-50 rounded-2xl shadow-md p-6 border border-gray-100 flex flex-col items-center justify-center">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 text-center">
+                            Ringkasan Kehadiran Bulan {{ $bulanSekarang }}
+                        </h4>
+                        <div class="h-72 w-72 flex items-center justify-center">
                             <canvas id="kehadiranChart"></canvas>
                         </div>
                     </div>
 
-                    {{-- Grafik Gaji (2 Kolom) - PASTIKAN MENGISI PENUH --}}
-                    <div class="p-6 lg:col-span-2">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Tren Gaji Bersih Tahun {{ $tahunSekarang }}
-                        </h3>
-                        {{-- Hapus style height dan biarkan w-full aspect-video yang mengatur proporsi --}}
-                        <div class="w-full aspect-video" style="max-height: 450px;">
-                            <canvas id="gajiChart" class="w-full"></canvas>
+                    <!-- Grafik Gaji -->
+                    <div class="bg-gray-50 rounded-2xl shadow-md p-6 border border-gray-100 lg:col-span-2">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 text-center">
+                            Tren Gaji Bersih Tahun {{ $tahunSekarang }}
+                        </h4>
+                        <div class="w-full aspect-video">
+                            <canvas id="gajiChart"></canvas>
                         </div>
                     </div>
-
                 </div>
-
-
             </div>
+
+            <!-- === GRID BARU: DAFTAR PENGUMUMAN === -->
+            <div class="mt-10 w-full">
+                <div class="bg-gray-50 rounded-2xl shadow-md p-6 border border-gray-100">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">Daftar Pengumuman</h3>
+
+                    @if ($pengumumans->isEmpty())
+                        <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg text-center font-medium">
+                            Belum ada pengumuman untuk Anda.
+                        </div>
+                    @else
+                        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            @foreach ($pengumumans as $p)
+                                <div class="bg-white shadow-sm border rounded-xl p-4 hover:shadow-md transition duration-200">
+                                    <h4 class="font-bold text-gray-800 text-lg mb-1">
+                                        {{ $p->pengumuman->judul ?? '-' }}
+                                    </h4>
+                                    <p class="text-gray-600 text-sm mb-2 line-clamp-3">
+                                        {{ $p->pengumuman->isi ?? '-' }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        {{ $p->pengumuman->created_at?->format('d M Y, H:i') }}
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <x-slot name="statCardComponent">
-        <script></script>
-    </x-slot>
-
+    <!-- === SCRIPT CHARTS === -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const bulanArray = @json($bulanArray);
         const dataGaji = @json($dataGaji);
         const dataKehadiran = @json($dataKehadiran);
 
-        // --- CHART GAJI (LINE CHART) ---
         const gajiChart = new Chart(document.getElementById('gajiChart'), {
             type: 'line',
             data: {
@@ -95,87 +152,39 @@
                 datasets: [{
                     label: 'Total Gaji Bersih (Rp)',
                     data: dataGaji,
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    borderColor: '#111827',
+                    backgroundColor: 'rgba(17, 24, 39, 0.08)',
                     fill: true,
                     tension: 0.4,
                     borderWidth: 3,
                     pointRadius: 5,
-                    pointBackgroundColor: 'rgb(59, 130, 246)'
+                    pointBackgroundColor: '#111827'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false,
-                            color: '#e5e7eb'
-                        },
-                        ticks: {
-                            callback: function(value, index, values) {
-                                return 'Rp ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
+                    x: { grid: { display: false } }
                 }
             }
         });
 
-        // --- SOLUSI PAKSA RESIZE (FINAL TWEAK UNTUK MEMASTIKAN LEBAR TERBACA) ---
-        // Ini adalah cara paling andal untuk memaksa Chart.js me-render ulang dengan lebar container yang benar.
-        // Kita gunakan window.onload agar eksekusi setelah semua elemen di DOM selesai dimuat.
-        window.onload = function() {
-            if (gajiChart) {
-                // Perintah resize Chart.js untuk menyesuaikan lebar penuh container (2 kolom)
-                gajiChart.resize();
-            }
-        };
-
-
-        // --- CHART KEHADIRAN (PIE CHART) ---
         new Chart(document.getElementById('kehadiranChart'), {
             type: 'pie',
             data: {
                 labels: Object.keys(dataKehadiran),
                 datasets: [{
                     data: Object.values(dataKehadiran),
-                    backgroundColor: [
-                        '#3B82F6',
-                        '#F59E0B',
-                        '#EF4444',
-                        '#6B7280',
-                        '#F97316'
-                    ],
-                    hoverOffset: 10
+                    backgroundColor: ['#3B82F6', '#F59E0B', '#EF4444', '#6B7280', '#22C55E'],
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20
-                        }
-                    },
-                    title: {
-                        display: false,
-                    }
-                }
+                plugins: { legend: { position: 'bottom', labels: { padding: 15 } } }
             }
         });
     </script>

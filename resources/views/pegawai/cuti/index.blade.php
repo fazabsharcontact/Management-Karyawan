@@ -24,9 +24,9 @@
                 <div>
                     <h3 class="text-lg font-semibold text-gray-700">Sisa Cuti Tahunan Anda</h3>
                     {{-- Mengambil sisa cuti dari relasi sisaCuti --}}
-                    <p class="text-3xl font-bold text-indigo-600">{{ $pegawai->sisaCuti->sisa_cuti ?? 0 }} Hari</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ $pegawai->sisaCuti->sisa_cuti ?? 0 }} Hari</p>
                 </div>
-                <a href="{{ route('pegawai.cuti.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow text-sm font-medium">
+                <a href="{{ route('pegawai.cuti.create') }}" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md shadow text-sm font-medium">
                     + Ajukan Cuti Baru
                 </a>
             </div>

@@ -63,7 +63,7 @@
                 </div>
 
                 <div class="flex gap-2 col-span-full md:col-span-1">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm">Terapkan</button>
+                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md shadow-sm">Terapkan</button>
                     <a href="{{ route('admin.laporan.performa.pdf', request()->query()) }}" target="_blank"
                        class="w-full text-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-sm">
                         Unduh PDF

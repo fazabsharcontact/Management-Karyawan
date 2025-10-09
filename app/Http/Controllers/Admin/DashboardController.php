@@ -40,7 +40,7 @@ class DashboardController extends Controller
         // Query untuk aktivitas
         $pegawaiBaru = DB::table('pegawais')
             ->where('created_at', '>=', $jangkauanWaktu)
-            ->select('created_at as waktu', DB::raw("CONCAT('👤 Pegawai baru ditambahkan: <b>', nama, '</b>') as keterangan"));
+            ->select('created_at as waktu', DB::raw("CONCAT('New Employee Added: <b>', nama, '</b>') as keterangan"));
 
         $kehadiran = DB::table('kehadirans as k')
             ->join('pegawais as p', 'k.pegawai_id', '=', 'p.id')
@@ -63,11 +63,17 @@ class DashboardController extends Controller
             ->unionAll($gaji)
             ->unionAll($pegawaiUpdate)
             ->orderBy('waktu', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get();
+
+        $pengumumans = \App\Models\Pengumuman::with('pembuat')
+            ->latest()
+            ->paginate(10);
+        
+        $meetings = \App\Models\Meeting::with('pembuat')->withCount('pesertas')->latest()->paginate(10);
         
         // dd() sudah dihapus, sekarang data akan dikirim ke view
-        return view('admin.dashboard', compact('totalPegawai', 'totalGaji', 'jabatanData', 'aktivitas'));
+        return view('admin.dashboard', compact('totalPegawai', 'totalGaji', 'jabatanData', 'aktivitas', 'pengumumans', 'meetings'));
     }
 }
 

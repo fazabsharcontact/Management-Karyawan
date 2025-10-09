@@ -1,124 +1,149 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            ➕ Tambah Data Gaji
-        </h2>
-    </x-slot>
+    <div class="py-6">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+                
+                <div class="mb-6">
+                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                        Tambah Data Gaji
+                    </h2>
+                    <p class="text-gray-500 text-sm mt-1">
+                        Lengkapi informasi gaji pegawai berikut secara lengkap dan teliti.
+                    </p>
+                </div>
 
-    <div class="p-6">
-        <form id="form-gaji" action="{{ route('admin.gaji.store') }}" method="POST" class="space-y-6">
-            @csrf
-            {{-- Bagian Informasi Utama --}}
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-lg font-semibold border-b pb-2 mb-4">Informasi Utama</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
-                        <select name="pegawai_id" id="pegawai_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
-                            <option value="">-- Pilih Pegawai --</option>
-                            @foreach($pegawais as $p)
-                                {{-- PERUBAHAN 1: Tambahkan data- atibut untuk bank --}}
-                                <option value="{{ $p->id }}" 
-                                        data-gaji-pokok="{{ $p->gaji_pokok }}"
-                                        data-nama-bank="{{ $p->nama_bank ?? '' }}"
-                                        data-nomor-rekening="{{ $p->nomor_rekening ?? '' }}">
-                                    {{ $p->nama }}
-                                </option>
+                {{-- Pesan Error --}}
+                @if($errors->any())
+                    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+                        <ul class="list-disc pl-5">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
                             @endforeach
-                        </select>
+                        </ul>
                     </div>
-                    <div>
-                        <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
-                        <select name="bulan" id="bulan" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
-                            @for($i = 1; $i <= 12; $i++)
-                            <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div>
-                        <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" value="{{ date('Y') }}" required>
-                    </div>
-                    <div>
-                        <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
-                        <input type="number" name="gaji_pokok" id="gaji_pokok" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai..." required>
-                    </div>
-                </div>
+                @endif
 
-                {{-- TAMBAHAN BARU: INFORMASI BANK (READONLY) --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
-                     <div>
-                        <label for="nama_bank" class="block font-medium text-sm text-gray-700">Nama Bank</label>
-                        <input type="text" id="nama_bank" class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai untuk melihat" readonly>
-                    </div>
-                     <div>
-                        <label for="nomor_rekening" class="block font-medium text-sm text-gray-700">Nomor Rekening</label>
-                        <input type="text" id="nomor_rekening" class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" placeholder="Pilih pegawai untuk melihat" readonly>
-                    </div>
-                </div>
-            </div>
+                <form id="form-gaji" action="{{ route('admin.gaji.store') }}" method="POST" class="space-y-6">
+                    @csrf
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex justify-between items-center border-b pb-2 mb-4">
-                    <h3 class="text-lg font-semibold">Tunjangan</h3>
-                    <button type="button" id="add-tunjangan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Tunjangan</button>
-                </div>
-                <div id="tunjangan-container" class="space-y-3"></div>
-            </div>
+                    {{-- Bagian Informasi Utama --}}
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 text-gray-800">Informasi Utama</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label for="pegawai_id" class="block font-medium text-sm text-gray-700">Pegawai</label>
+                                <select name="pegawai_id" id="pegawai_id" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
+                                    <option value="">-- Pilih Pegawai --</option>
+                                    @foreach($pegawais as $p)
+                                        <option value="{{ $p->id }}" 
+                                                data-gaji-pokok="{{ $p->gaji_pokok }}"
+                                                data-nama-bank="{{ $p->nama_bank ?? '' }}"
+                                                data-nomor-rekening="{{ $p->nomor_rekening ?? '' }}">
+                                            {{ $p->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="bulan" class="block font-medium text-sm text-gray-700">Bulan</label>
+                                <select name="bulan" id="bulan" class="border-gray-300 rounded-md shadow-sm mt-1 w-full" required>
+                                    @for($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::create()->month($i)->format('F') }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="tahun" class="block font-medium text-sm text-gray-700">Tahun</label>
+                                <input type="number" name="tahun" id="tahun" 
+                                       class="border-gray-300 rounded-md shadow-sm mt-1 w-full" 
+                                       value="{{ date('Y') }}" required>
+                            </div>
+                            <div>
+                                <label for="gaji_pokok" class="block font-medium text-sm text-gray-700">Gaji Pokok (Rp)</label>
+                                <input type="number" name="gaji_pokok" id="gaji_pokok" 
+                                       class="border-gray-300 rounded-md shadow-sm mt-1 w-full" 
+                                       placeholder="Pilih pegawai..." required>
+                            </div>
+                        </div>
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex justify-between items-center border-b pb-2 mb-4">
-                    <h3 class="text-lg font-semibold">Potongan</h3>
-                    <button type="button" id="add-potongan" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah Potongan</button>
-                </div>
-                <div id="potongan-container" class="space-y-3"></div>
-            </div>
-            
-            <div class="bg-gray-50 p-6 rounded-lg shadow">
-                <h3 class="text-lg font-semibold border-b pb-2 mb-4">Ringkasan Gaji</h3>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span>Gaji Pokok:</span> <span id="summary-gaji-pokok">Rp 0</span></div>
-                    <div class="flex justify-between"><span>Total Tunjangan:</span> <span id="summary-total-tunjangan" class="text-green-600">Rp 0</span></div>
-                    <div class="flex justify-between"><span>Total Potongan:</span> <span id="summary-total-potongan" class="text-red-600">Rp 0</span></div>
-                    <div class="flex justify-between font-bold text-base border-t pt-2 mt-2"><span>Gaji Bersih (Estimasi):</span> <span id="summary-gaji-bersih">Rp 0</span></div>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 pt-4">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow">Simpan</button>
-                <a href="{{ route('admin.gaji.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
-            </div>
-        </form>
-    </div>
-
-    {{-- Modal Konfirmasi --}}
-    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0">
-                        <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-                    </div>
-                    <div class="ml-4 text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Konfirmasi Penyimpanan</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500" id="modal-message">Apakah Anda yakin ingin menyimpan data gaji ini?</p>
-                            <div id="warning-pegawai" class="hidden mt-4">
-                                <p class="text-sm font-bold text-red-700">Peringatan: Data gaji untuk pegawai ini sudah ada pada periode yang dipilih.</p>
-                                <ul id="pegawai-list" class="mt-2 list-disc pl-5 text-sm text-red-600">
-                                </ul>
+                        {{-- Informasi Bank --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
+                            <div>
+                                <label for="nama_bank" class="block font-medium text-sm text-gray-700">Nama Bank</label>
+                                <input type="text" id="nama_bank" 
+                                       class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" 
+                                       placeholder="Pilih pegawai untuk melihat" readonly>
+                            </div>
+                            <div>
+                                <label for="nomor_rekening" class="block font-medium text-sm text-gray-700">Nomor Rekening</label>
+                                <input type="text" id="nomor_rekening" 
+                                       class="bg-gray-100 border-gray-300 rounded-md shadow-sm mt-1 w-full" 
+                                       placeholder="Pilih pegawai untuk melihat" readonly>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="confirm-yes" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">
-                        Ya, Simpan
-                    </button>
-                    <button type="button" id="confirm-no" class="mt-3 inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
-                        Batal
-                    </button>
-                </div>
+
+                    {{-- Tunjangan --}}
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-center border-b pb-2 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Tunjangan</h3>
+                            <button type="button" id="add-tunjangan" 
+                                    class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
+                                + Tambah Tunjangan
+                            </button>
+                        </div>
+                        <div id="tunjangan-container" class="space-y-3"></div>
+                    </div>
+
+                    {{-- Potongan --}}
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-center border-b pb-2 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Potongan</h3>
+                            <button type="button" id="add-potongan" 
+                                    class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
+                                + Tambah Potongan
+                            </button>
+                        </div>
+                        <div id="potongan-container" class="space-y-3"></div>
+                    </div>
+
+                    {{-- Ringkasan --}}
+                    <div class="bg-white p-6 rounded-lg shadow-inner border border-gray-200">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 text-gray-800">Ringkasan Gaji</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Gaji Pokok:</span>
+                                <span id="summary-gaji-pokok">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Tunjangan:</span>
+                                <span id="summary-total-tunjangan" class="text-green-600">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Potongan:</span>
+                                <span id="summary-total-potongan" class="text-red-600">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-base border-t pt-2 mt-2">
+                                <span>Gaji Bersih (Estimasi):</span>
+                                <span id="summary-gaji-bersih">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Tombol Aksi --}}
+                    <div class="flex items-center gap-2 pt-4">
+                        <button type="submit" 
+                                class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow">
+                            Simpan
+                        </button>
+                        <a href="{{ route('admin.gaji.index') }}" 
+                           class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded-lg shadow">
+                            Kembali
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -293,4 +318,3 @@
         });
     </script>
 </x-app-layout>
-

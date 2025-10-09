@@ -1,35 +1,62 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">✏️ Edit Tim: {{ $tim->nama_tim }}</h2>
-    </x-slot>
+    <div class="py-6">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm sm:rounded-lg border border-gray-200">
+                <div class="p-6">
 
-    <div class="p-6">
-        <div class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto">
-            <form method="POST" action="{{ route('admin.tim.update', $tim->id) }}" class="space-y-4">
-                @csrf
-                @method('PUT')
-                <div>
-                    <label for="nama_tim" class="block font-medium text-sm text-gray-700">Nama Tim</label>
-                    <input type="text" name="nama_tim" id="nama_tim" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" value="{{ old('nama_tim', $tim->nama_tim) }}" required autofocus>
+                    <div class="mb-6 border-b pb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Edit Tim
+                        </h2>
+                        <p class="text-gray-500 mt-1 text-sm">
+                            Ubah informasi tim berikut sesuai kebutuhan.
+                        </p>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.tim.update', $tim->id) }}" class="space-y-5">
+                        @csrf
+                        @method('PUT')
+
+                        <div>
+                            <label for="nama_tim" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Tim
+                            </label>
+                            <input type="text" name="nama_tim" id="nama_tim"
+                                value="{{ old('nama_tim', $tim->nama_tim) }}"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition"
+                                placeholder="Masukkan nama tim" required autofocus>
+                        </div>
+
+                        <div>
+                            <label for="divisi_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Pilih Divisi
+                            </label>
+                            <select name="divisi_id" id="divisi_id"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition"
+                                required>
+                                <option value="">-- Pilih Divisi Induk --</option>
+                                @foreach($divisis as $divisi)
+                                    <option value="{{ $divisi->id }}" {{ old('divisi_id', $tim->divisi_id) == $divisi->id ? 'selected' : '' }}>
+                                        {{ $divisi->nama_divisi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <a href="{{ route('admin.tim-divisi.index') }}"
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg border border-gray-300 transition">
+                                Batal
+                            </a>
+                            <button type="submit"
+                                class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow transition">
+                                Update
+                            </button>
+                        </div>
+                    </form>
+
                 </div>
-                 <div>
-                    <label for="divisi_id" class="block font-medium text-sm text-gray-700">Pilih Divisi</label>
-                    <select name="divisi_id" id="divisi_id" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>
-                        <option value="">-- Pilih Divisi Induk --</option>
-                        @foreach($divisis as $divisi)
-                            <option value="{{ $divisi->id }}" {{ old('divisi_id', $tim->divisi_id) == $divisi->id ? 'selected' : '' }}>
-                                {{ $divisi->nama_divisi }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow">Update</button>
-                    <a href="{{ route('admin.tim-divisi.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </x-app-layout>
-
-
