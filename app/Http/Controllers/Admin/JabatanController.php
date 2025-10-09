@@ -75,7 +75,6 @@ class JabatanController extends Controller
         $validated = $request->validate([
             // PERBAIKAN: Aturan 'unique' yang lebih modern dan aman
             'nama_jabatan' => ['required', Rule::unique('jabatans')->ignore($jabatan->id)],
-            'tunjangan' => 'required|numeric|min:0',
             'gaji_awal' => 'required|numeric|min:0',
         ]);
 
