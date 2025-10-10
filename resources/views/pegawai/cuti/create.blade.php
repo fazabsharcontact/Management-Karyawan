@@ -47,7 +47,7 @@
                     <textarea name="keterangan" id="keterangan" rows="4" class="border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm block mt-1 w-full" required>{{ old('keterangan') }}</textarea>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md shadow">Ajukan Cuti</button>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-00 text-white px-4 py-2 rounded-md shadow">Ajukan Cuti</button>
                     <a href="{{ route('pegawai.cuti.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow">Batal</a>
                 </div>
             </form>
